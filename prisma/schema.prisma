@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Subscription {
+  id                      String   @id
+  userId                  String
+  providerName            String
+  category                String
+  status                  String
+  billingCadence          String
+  intervalDays            Int?
+  priceAmount             Float
+  currency                String
+  startDate               String?
+  renewalDate             String?
+  trialStartDate          String?
+  trialEndDate            String?
+  cancelByDate            String?
+  postTrialPriceAmount    Float?
+  accountEmailForProvider String?
+  loginUrl                String?
+  billingUrl              String?
+  cancelUrl               String?
+  supportUrl              String?
+  paymentMethodLabel      String?
+  notes                   String?
+  lastUsageDate           String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, renewalDate])
+}
+
+model Notification {
+  id             String    @id
+  userId         String
+  subscriptionId String
+  type           String
+  channel        String
+  status         String
+  scheduledFor   DateTime
+  sentAt         DateTime?
+  readAt         DateTime?
+  dedupeKey      String    @unique
+  payloadTitle   String
+  payloadBody    String
+  payloadUrl     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId, status, scheduledFor])
+  @@index([subscriptionId])
+}

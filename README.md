@@ -1,6 +1,31 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Project Docs
+
+Subscription Hub product planning lives in:
+
+- [Product spec](docs/product/subscription-hub-product-spec.md)
+- [Feature registry](docs/product/subscription-hub-feature-registry.md)
+- [Master implementation plan](docs/superpowers/plans/2026-05-19-subscription-hub-master-plan.md)
+- [CSV import implementation plan](docs/superpowers/plans/2026-05-19-csv-import-onboarding-plan.md)
+- [Bobby competitive research](docs/research/bobby-competitive-research.md)
+- [Market leadership roadmap](docs/product/market-leadership-roadmap.md)
+
 ## Getting Started
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Prepare the local SQLite database:
+
+```bash
+npm run db:generate
+npm run db:push
+npm run db:seed
+```
 
 First, run the development server:
 
@@ -16,9 +41,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## CSV Import
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The import flow is available at `/import/csv`. Users can download the template,
+upload or paste CSV data, preview row-level validation and duplicate warnings,
+then commit valid rows into their subscription list.
+
+Template file:
+
+- `public/templates/subscription-hub-import-template.csv`
+
+Expected CSV columns:
+
+```text
+providerName,category,status,billingCadence,priceAmount,currency,renewalDate,trialEndDate,cancelByDate,cancelUrl,billingUrl,accountEmail,notes
+```
 
 ## Learn More
 

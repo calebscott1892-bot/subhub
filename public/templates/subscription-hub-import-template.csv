@@ -1,0 +1,2 @@
+providerName,category,status,billingCadence,priceAmount,currency,renewalDate,trialEndDate,cancelByDate,cancelUrl,billingUrl,accountEmail,notes
+Netflix,Streaming,Active,Monthly,22.99,USD,2026-06-15,,,https://www.netflix.com/cancelplan,https://www.netflix.com/youraccount,home@example.com,Family plan
