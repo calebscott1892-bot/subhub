@@ -38,6 +38,27 @@ model Subscription {
   @@index([userId, renewalDate])
 }
 
+model BudgetSettings {
+  id            String   @id
+  userId        String   @unique
+  monthlyTarget Float?
+  currency      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CategoryBudget {
+  id            String   @id
+  userId        String
+  category      String
+  monthlyTarget Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, category])
+  @@index([userId])
+}
+
 model Notification {
   id             String    @id
   userId         String

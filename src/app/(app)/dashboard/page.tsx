@@ -1,7 +1,17 @@
 import Link from "next/link";
+import {
+  BudgetProgressBar,
+  budgetStatusLabel,
+  budgetStatusTextClass,
+} from "@/components/budget-progress";
+import { InsightsPanel } from "@/components/insights-panel";
 import { StatusPill } from "@/components/status-pill";
+import { progressAgainstTarget } from "@/lib/budget/calculate-budget";
+import { getUpcomingCharges } from "@/lib/budget/forecast";
+import { getBudgetSettings } from "@/lib/budget/repository";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { daysUntil, getUpcomingRenewals } from "@/lib/subscriptions/dates";
+import { getSubscriptionInsights } from "@/lib/insights/get-insights";
+import { daysUntil } from "@/lib/subscriptions/dates";
 import { DEMO_USER_ID, listSubscriptions } from "@/lib/subscriptions/repository";
 import {
   getDashboardMetrics,
@@ -14,10 +24,16 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const today = getTodayDateOnly();
   const subscriptions = await listSubscriptions(DEMO_USER_ID);
+  const budgetSettings = await getBudgetSettings(DEMO_USER_ID);
   const metrics = getDashboardMetrics(subscriptions, today);
-  const renewals = getUpcomingRenewals(subscriptions, today, 45).slice(0, 5);
+  const upcomingCharges = getUpcomingCharges(subscriptions, today, 45).slice(0, 5);
   const trials = getTrialsEndingSoon(subscriptions, today, 14);
-  const currency = "USD";
+  const insights = getSubscriptionInsights(subscriptions, today);
+  const budgetProgress = progressAgainstTarget(
+    metrics.monthlyTotal,
+    budgetSettings.monthlyTarget,
+  );
+  const currency = budgetSettings.currency;
 
   return (
     <div className="space-y-8">
@@ -69,6 +85,48 @@ export default async function DashboardPage() {
         />
       </section>
 
+      <section className="rounded-lg border border-[#dbe3dc] bg-white p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Monthly budget</h2>
+            {budgetSettings.monthlyTarget !== null ? (
+              <p className="text-sm text-[#68766f]">
+                {formatCurrency(metrics.monthlyTotal, currency)} of{" "}
+                {formatCurrency(budgetSettings.monthlyTarget, currency)} used
+              </p>
+            ) : (
+              <p className="text-sm text-[#68766f]">
+                No target yet. Set one to get drift warnings before renewals
+                hit.
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {budgetSettings.monthlyTarget !== null ? (
+              <p
+                className={`text-sm font-semibold ${budgetStatusTextClass(budgetProgress.status)}`}
+              >
+                {budgetStatusLabel(budgetProgress.status)}
+              </p>
+            ) : null}
+            <Link
+              href="/budget"
+              className="text-sm font-semibold text-[#176143] hover:text-[#0d3d2a]"
+            >
+              Manage budget
+            </Link>
+          </div>
+        </div>
+        {budgetSettings.monthlyTarget !== null ? (
+          <div className="mt-4">
+            <BudgetProgressBar
+              utilization={budgetProgress.utilization}
+              status={budgetProgress.status}
+            />
+          </div>
+        ) : null}
+      </section>
+
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="rounded-lg border border-[#dbe3dc] bg-white">
           <div className="flex items-center justify-between border-b border-[#e5ebe6] px-5 py-4">
@@ -84,7 +142,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-[#edf1ed]">
-            {renewals.length > 0 ? renewals.map((subscription) => (
+            {upcomingCharges.length > 0 ? upcomingCharges.map(({ subscription, date, amount }) => (
               <Link
                 href={`/subscriptions/${subscription.id}`}
                 key={subscription.id}
@@ -101,11 +159,9 @@ export default async function DashboardPage() {
                 <StatusPill status={subscription.status} />
                 <div className="text-left md:text-right">
                   <p className="font-semibold">
-                    {formatCurrency(subscription.priceAmount, subscription.currency)}
+                    {formatCurrency(amount, subscription.currency)}
                   </p>
-                  <p className="text-sm text-[#68766f]">
-                    {formatDate(subscription.renewalDate)}
-                  </p>
+                  <p className="text-sm text-[#68766f]">{formatDate(date)}</p>
                 </div>
               </Link>
             )) : (
@@ -158,23 +214,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-[#dbe3dc] bg-white p-5">
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <h2 className="text-lg font-semibold">Early insights</h2>
-            <p className="mt-2 text-sm leading-6 text-[#68766f]">
-              The first pass keeps insights deterministic: annual renewals,
-              upcoming trials, and old usage dates are visible before AI enters
-              the product.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Insight label="Annual renewal" value="Sep 15" />
-            <Insight label="Oldest usage" value="Mar 3" />
-            <Insight label="Next charge" value={formatDate(metrics.nextRenewal?.renewalDate)} />
-          </div>
-        </div>
-      </section>
+      <InsightsPanel insights={insights} currency={currency} />
     </div>
   );
 }
@@ -199,17 +239,6 @@ function MetricCard({
         {value}
       </p>
       <p className="mt-2 text-sm text-[#68766f]">{detail}</p>
-    </div>
-  );
-}
-
-function Insight({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-[#dbe3dc] bg-[#f8faf7] p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#68766f]">
-        {label}
-      </p>
-      <p className="mt-2 text-xl font-semibold text-[#16201d]">{value}</p>
     </div>
   );
 }

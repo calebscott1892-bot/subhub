@@ -1,15 +1,18 @@
-export type SubscriptionCategory =
-  | "Streaming"
-  | "Music"
-  | "Software"
-  | "Storage"
-  | "Utilities"
-  | "Finance"
-  | "Health"
-  | "News"
-  | "Gaming"
-  | "Membership"
-  | "Other";
+export const SUBSCRIPTION_CATEGORIES = [
+  "Streaming",
+  "Music",
+  "Software",
+  "Storage",
+  "Utilities",
+  "Finance",
+  "Health",
+  "News",
+  "Gaming",
+  "Membership",
+  "Other",
+] as const;
+
+export type SubscriptionCategory = (typeof SUBSCRIPTION_CATEGORIES)[number];
 
 export type SubscriptionStatus =
   | "Active"

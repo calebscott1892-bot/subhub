@@ -8,10 +8,51 @@ const demoUserId = "demo-user";
 const seedDate = "2026-05-19";
 const seedTimezone = "Australia/Perth";
 
+const demoBudget = {
+  monthlyTarget: 175,
+  currency: "USD",
+  categories: [
+    { category: "Streaming", monthlyTarget: 30 },
+    { category: "Music", monthlyTarget: 25 },
+    { category: "Software", monthlyTarget: 60 },
+    { category: "Storage", monthlyTarget: 5 },
+    { category: "Health", monthlyTarget: 40 },
+  ],
+};
+
 async function main() {
   await prisma.notification.deleteMany({
     where: { userId: demoUserId },
   });
+
+  await prisma.budgetSettings.upsert({
+    where: { userId: demoUserId },
+    update: {
+      monthlyTarget: demoBudget.monthlyTarget,
+      currency: demoBudget.currency,
+    },
+    create: {
+      id: randomUUID(),
+      userId: demoUserId,
+      monthlyTarget: demoBudget.monthlyTarget,
+      currency: demoBudget.currency,
+    },
+  });
+
+  for (const target of demoBudget.categories) {
+    await prisma.categoryBudget.upsert({
+      where: {
+        userId_category: { userId: demoUserId, category: target.category },
+      },
+      update: { monthlyTarget: target.monthlyTarget },
+      create: {
+        id: randomUUID(),
+        userId: demoUserId,
+        category: target.category,
+        monthlyTarget: target.monthlyTarget,
+      },
+    });
+  }
 
   for (const subscription of sampleSubscriptions) {
     await prisma.subscription.upsert({

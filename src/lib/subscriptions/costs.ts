@@ -12,6 +12,26 @@ const ACTIVE_SPEND_STATUSES = new Set<Subscription["status"]>([
   "Paused",
 ]);
 
+export function isCountedInSpend(status: Subscription["status"]): boolean {
+  return ACTIVE_SPEND_STATUSES.has(status);
+}
+
+export function chargeAmountFor(
+  subscription: Pick<
+    Subscription,
+    "status" | "priceAmount" | "postTrialPriceAmount"
+  >,
+): number {
+  if (
+    subscription.status === "Trial" &&
+    subscription.postTrialPriceAmount != null
+  ) {
+    return subscription.postTrialPriceAmount;
+  }
+
+  return subscription.priceAmount;
+}
+
 export function calculateMonthlyCost(input: CostInput): number {
   const amount = input.priceAmount;
 
@@ -75,6 +95,6 @@ export function summarizeSubscriptionSpend(subscriptions: Subscription[]) {
   );
 }
 
-function roundCurrency(value: number): number {
+export function roundCurrency(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }

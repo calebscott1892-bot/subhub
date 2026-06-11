@@ -3,6 +3,7 @@ import Link from "next/link";
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/subscriptions", label: "Subscriptions" },
+  { href: "/budget", label: "Budget" },
   { href: "/import/csv", label: "Import" },
   { href: "/trials", label: "Trials" },
   { href: "/notifications", label: "Notifications" },
@@ -41,10 +42,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Current phase
           </p>
           <p className="mt-2 text-sm font-medium text-[#16201d]">
-            Import onboarding
+            Budgets and insights
           </p>
           <p className="mt-1 text-xs leading-5 text-[#68766f]">
-            Manual entry, trials, and CSV intake.
+            Targets, charge forecasts, and spending insights.
           </p>
         </div>
       </aside>

@@ -1,7 +1,8 @@
-import type {
-  BillingCadence,
-  SubscriptionCategory,
-  SubscriptionStatus,
+import {
+  SUBSCRIPTION_CATEGORIES,
+  type BillingCadence,
+  type SubscriptionCategory,
+  type SubscriptionStatus,
 } from "./types";
 
 export type SubscriptionFormInput = {
@@ -32,19 +33,7 @@ export type SubscriptionValidationResult =
   | { ok: true; data: SubscriptionFormInput; errors?: never }
   | { ok: false; data?: never; errors: Record<string, string> };
 
-const categories = new Set<SubscriptionCategory>([
-  "Streaming",
-  "Music",
-  "Software",
-  "Storage",
-  "Utilities",
-  "Finance",
-  "Health",
-  "News",
-  "Gaming",
-  "Membership",
-  "Other",
-]);
+const categories = new Set<SubscriptionCategory>(SUBSCRIPTION_CATEGORIES);
 
 const statuses = new Set<SubscriptionStatus>([
   "Active",

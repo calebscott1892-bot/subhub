@@ -41,6 +41,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Budget And Insights
+
+The `/budget` page tracks normalized monthly spend against an overall monthly
+target and optional per-category targets, and projects real upcoming charges
+(from each renewal date and cadence) over the next six months. Targets are
+edited inline on the page; leaving a field empty clears that target.
+
+The dashboard shows a compact budget progress widget plus deterministic
+insights computed locally from your data:
+
+- Annual renewals charging within the next 60 days.
+- Subscriptions unused for 45+ days (based on the last usage date).
+- Duplicate providers and overlapping categories (streaming, music, storage,
+  news, gaming).
+
 ## CSV Import
 
 The import flow is available at `/import/csv`. Users can download the template,
