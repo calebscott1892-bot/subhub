@@ -31,11 +31,48 @@ model Subscription {
   paymentMethodLabel      String?
   notes                   String?
   lastUsageDate           String?
+  isShared                Boolean  @default(false)
+  splitType               String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
   @@index([userId, status])
   @@index([userId, renewalDate])
+}
+
+model Household {
+  id          String   @id
+  ownerUserId String   @unique
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HouseholdMember {
+  id          String   @id
+  householdId String
+  name        String
+  email       String?
+  role        String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([householdId])
+}
+
+model SubscriptionShare {
+  id             String   @id
+  subscriptionId String
+  memberId       String
+  fixedAmount    Float?
+  percentage     Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([subscriptionId, memberId])
+  @@index([subscriptionId])
+  @@index([memberId])
 }
 
 model BudgetSettings {

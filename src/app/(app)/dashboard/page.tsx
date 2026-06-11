@@ -10,7 +10,10 @@ import { progressAgainstTarget } from "@/lib/budget/calculate-budget";
 import { getUpcomingCharges } from "@/lib/budget/forecast";
 import { getBudgetSettings } from "@/lib/budget/repository";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { getSharesForSubscriptions } from "@/lib/household/repository";
 import { getSubscriptionInsights } from "@/lib/insights/get-insights";
+import { summarizeSharedSpend } from "@/lib/sharing/personal-cost";
+import { roundCurrency } from "@/lib/subscriptions/costs";
 import { daysUntil } from "@/lib/subscriptions/dates";
 import { DEMO_USER_ID, listSubscriptions } from "@/lib/subscriptions/repository";
 import {
@@ -25,12 +28,16 @@ export default async function DashboardPage() {
   const today = getTodayDateOnly();
   const subscriptions = await listSubscriptions(DEMO_USER_ID);
   const budgetSettings = await getBudgetSettings(DEMO_USER_ID);
+  const shares = await getSharesForSubscriptions(
+    subscriptions.map((subscription) => subscription.id),
+  );
   const metrics = getDashboardMetrics(subscriptions, today);
+  const spend = summarizeSharedSpend(subscriptions, shares);
   const upcomingCharges = getUpcomingCharges(subscriptions, today, 45).slice(0, 5);
   const trials = getTrialsEndingSoon(subscriptions, today, 14);
   const insights = getSubscriptionInsights(subscriptions, today);
   const budgetProgress = progressAgainstTarget(
-    metrics.monthlyTotal,
+    spend.personalMonthly,
     budgetSettings.monthlyTarget,
   );
   const currency = budgetSettings.currency;
@@ -65,13 +72,26 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Monthly spend"
-          value={formatCurrency(metrics.monthlyTotal, currency)}
-          detail="Normalized from all active cadences"
+          value={formatCurrency(spend.personalMonthly, currency)}
+          detail={
+            spend.sharedCount > 0
+              ? `Your share - ${formatCurrency(spend.grossMonthly, currency)} gross`
+              : "Normalized from all active cadences"
+          }
         />
         <MetricCard
           label="Annual run rate"
-          value={formatCurrency(metrics.annualTotal, currency)}
-          detail="Projected recurring cost"
+          value={formatCurrency(
+            spend.sharedCount > 0
+              ? roundCurrency(spend.personalMonthly * 12)
+              : metrics.annualTotal,
+            currency,
+          )}
+          detail={
+            spend.sharedCount > 0
+              ? `Your share - ${formatCurrency(metrics.annualTotal, currency)} gross`
+              : "Projected recurring cost"
+          }
         />
         <MetricCard
           label="Active tracked"
@@ -91,8 +111,9 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold">Monthly budget</h2>
             {budgetSettings.monthlyTarget !== null ? (
               <p className="text-sm text-[#68766f]">
-                {formatCurrency(metrics.monthlyTotal, currency)} of{" "}
+                {formatCurrency(spend.personalMonthly, currency)} of{" "}
                 {formatCurrency(budgetSettings.monthlyTarget, currency)} used
+                {spend.sharedCount > 0 ? " (your share)" : ""}
               </p>
             ) : (
               <p className="text-sm text-[#68766f]">

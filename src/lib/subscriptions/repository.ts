@@ -29,6 +29,8 @@ type SubscriptionRecord = {
   paymentMethodLabel: string | null;
   notes: string | null;
   lastUsageDate: string | null;
+  isShared: boolean;
+  splitType: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -87,6 +89,8 @@ export async function createSubscription(
     data: {
       id: randomUUID(),
       userId,
+      isShared: false,
+      splitType: null,
       createdAt: now,
       updatedAt: now,
       ...input,
@@ -153,6 +157,8 @@ function mapSubscriptionRecord(record: SubscriptionRecord): Subscription {
     paymentMethodLabel: record.paymentMethodLabel,
     notes: record.notes,
     lastUsageDate: record.lastUsageDate,
+    isShared: record.isShared,
+    splitType: record.splitType as Subscription["splitType"],
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };

@@ -9,6 +9,11 @@ import { buildChargeForecast } from "@/lib/budget/forecast";
 import { getBudgetSettings, getCategoryTargets } from "@/lib/budget/repository";
 import { categoryTargetFieldName } from "@/lib/budget/validation";
 import { formatCurrency } from "@/lib/format";
+import { getSharesForSubscriptions } from "@/lib/household/repository";
+import {
+  personalMonthlyCost,
+  summarizeSharedSpend,
+} from "@/lib/sharing/personal-cost";
 import {
   DEMO_USER_ID,
   listSubscriptions,
@@ -23,10 +28,16 @@ export default async function BudgetPage() {
   const subscriptions = await listSubscriptions(DEMO_USER_ID);
   const settings = await getBudgetSettings(DEMO_USER_ID);
   const categoryTargets = await getCategoryTargets(DEMO_USER_ID);
+  const shares = await getSharesForSubscriptions(
+    subscriptions.map((subscription) => subscription.id),
+  );
+  const sharedSpend = summarizeSharedSpend(subscriptions, shares);
   const overview = calculateBudgetOverview(
     subscriptions,
     settings.monthlyTarget,
     categoryTargets,
+    (subscription) =>
+      personalMonthlyCost(subscription, shares.get(subscription.id) ?? []),
   );
   const forecast = buildChargeForecast(subscriptions, today, 6);
   const currency = settings.currency;
@@ -61,7 +72,11 @@ export default async function BudgetPage() {
         <MetricCard
           label="Monthly spend"
           value={formatCurrency(overview.monthlySpend, currency)}
-          detail="Active, trial, and paused subscriptions"
+          detail={
+            sharedSpend.sharedCount > 0
+              ? `Your share - ${formatCurrency(sharedSpend.grossMonthly, currency)} gross before splits`
+              : "Active, trial, and paused subscriptions"
+          }
         />
         <MetricCard
           label="Monthly target"
@@ -97,7 +112,9 @@ export default async function BudgetPage() {
           <div>
             <h2 className="text-lg font-semibold">This month against target</h2>
             <p className="text-sm text-[#68766f]">
-              Normalized monthly cost of everything you currently pay for.
+              {sharedSpend.sharedCount > 0
+                ? "Your personal share after household splits."
+                : "Normalized monthly cost of everything you currently pay for."}
             </p>
           </div>
           <p
@@ -124,6 +141,9 @@ export default async function BudgetPage() {
           <p className="text-sm text-[#68766f]">
             Real charges projected from each renewal date and cadence over the
             next six months.
+            {sharedSpend.sharedCount > 0
+              ? " Shared subscriptions show the full bill you front before reimbursements."
+              : ""}
           </p>
         </div>
         <div className="px-5 py-5">

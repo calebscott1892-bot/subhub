@@ -183,6 +183,8 @@ function makeRecord(overrides: Partial<{
     paymentMethodLabel: null,
     notes: null,
     lastUsageDate: null,
+    isShared: false,
+    splitType: null,
     createdAt: new Date("2026-05-19T00:00:00.000Z"),
     updatedAt: new Date("2026-05-19T00:00:00.000Z"),
   };

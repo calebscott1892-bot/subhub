@@ -23,6 +23,8 @@ export type SubscriptionStatus =
 
 export type BillingCadence = "Monthly" | "Yearly" | "Weekly" | "Custom";
 
+export type SplitType = "Equal" | "Fixed" | "Percentage";
+
 export type Subscription = {
   id: string;
   providerName: string;
@@ -46,6 +48,8 @@ export type Subscription = {
   paymentMethodLabel?: string | null;
   notes?: string | null;
   lastUsageDate?: string | null;
+  isShared?: boolean;
+  splitType?: SplitType | null;
   createdAt: string;
   updatedAt: string;
 };

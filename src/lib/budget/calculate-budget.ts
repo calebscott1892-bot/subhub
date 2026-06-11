@@ -36,6 +36,7 @@ export function calculateBudgetOverview(
   subscriptions: Subscription[],
   monthlyTarget: number | null,
   categoryTargets: CategoryTarget[],
+  costOf: (subscription: Subscription) => number = calculateMonthlyCost,
 ): BudgetOverview {
   const spendByCategory = new Map<string, number>();
   let monthlySpend = 0;
@@ -45,7 +46,7 @@ export function calculateBudgetOverview(
       continue;
     }
 
-    const cost = calculateMonthlyCost(subscription);
+    const cost = costOf(subscription);
     monthlySpend = roundCurrency(monthlySpend + cost);
     spendByCategory.set(
       subscription.category,

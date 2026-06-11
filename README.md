@@ -56,6 +56,19 @@ insights computed locally from your data:
 - Duplicate providers and overlapping categories (streaming, music, storage,
   news, gaming).
 
+## Household And Shared Subscriptions
+
+The `/household` page manages the people you share subscriptions with.
+Members have roles (Adult, Member, Viewer) backed by a permission matrix in
+`src/lib/household/permissions.ts`; adding a member with an email records an
+invitation (delivery arrives with the email provider integration).
+
+Each subscription detail page has a sharing editor supporting equal, fixed
+amount, and percentage splits. The owner always pays the remainder, so splits
+add up to the real bill. When anything is shared, the dashboard and budget
+pages track your personal share (what you actually pay) alongside the gross
+bill, and the household page totals what each member owes per month.
+
 ## CSV Import
 
 The import flow is available at `/import/csv`. Users can download the template,

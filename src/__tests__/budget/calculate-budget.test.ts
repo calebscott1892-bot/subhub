@@ -80,6 +80,24 @@ describe("budget overview calculation", () => {
     expect(overview.remaining).toBe(48);
   });
 
+  test("accepts a custom cost function for personal-share budgeting", () => {
+    const overview = calculateBudgetOverview(
+      [
+        makeSubscription({ id: "shared", category: "Streaming", priceAmount: 30 }),
+        makeSubscription({ id: "solo", category: "Music", priceAmount: 10 }),
+      ],
+      null,
+      [],
+      (subscription) => (subscription.id === "shared" ? 10 : 10),
+    );
+
+    expect(overview.monthlySpend).toBe(20);
+    expect(
+      overview.categories.find((category) => category.category === "Streaming")
+        ?.monthlySpend,
+    ).toBe(10);
+  });
+
   test("grades overall progress with the approaching threshold", () => {
     expect(progressAgainstTarget(50, null).status).toBe("no-target");
     expect(progressAgainstTarget(50, 0).status).toBe("no-target");

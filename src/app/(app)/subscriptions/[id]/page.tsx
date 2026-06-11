@@ -1,13 +1,22 @@
 import Link from "next/link";
+import { SharingEditor } from "@/components/sharing-editor";
 import { StatusPill } from "@/components/status-pill";
 import { SubscriptionForm } from "@/components/subscription-form";
 import { formatCadence, formatCurrency, formatDate } from "@/lib/format";
+import {
+  getSharesForSubscriptions,
+  listHouseholdMembers,
+} from "@/lib/household/repository";
 import { calculateAnnualCost, calculateMonthlyCost } from "@/lib/subscriptions/costs";
 import {
   DEMO_USER_ID,
   getSubscriptionById,
 } from "@/lib/subscriptions/repository";
-import { deleteSubscriptionAction, updateSubscriptionAction } from "../actions";
+import {
+  deleteSubscriptionAction,
+  saveSubscriptionSharingAction,
+  updateSubscriptionAction,
+} from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +42,16 @@ export default async function SubscriptionDetailPage({
     );
   }
 
+  const members = await listHouseholdMembers(DEMO_USER_ID);
+  const shares =
+    (await getSharesForSubscriptions([subscription.id])).get(subscription.id) ??
+    [];
   const updateAction = updateSubscriptionAction.bind(null, subscription.id);
   const deleteAction = deleteSubscriptionAction.bind(null, subscription.id);
+  const sharingAction = saveSubscriptionSharingAction.bind(
+    null,
+    subscription.id,
+  );
 
   return (
     <div className="space-y-6">
@@ -139,6 +156,13 @@ export default async function SubscriptionDetailPage({
           </div>
         </aside>
       </section>
+
+      <SharingEditor
+        subscription={subscription}
+        members={members}
+        shares={shares}
+        action={sharingAction}
+      />
 
       <section className="space-y-4">
         <div>
