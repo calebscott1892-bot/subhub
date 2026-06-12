@@ -166,6 +166,21 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The repo is deploy-ready; the only manual prerequisite is a Postgres
+database.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Create a Postgres database. Supabase free tier works (note: the linked
+   Supabase account currently has two active free projects, which is the
+   plan limit — pause one in the Supabase dashboard or upgrade). Neon or any
+   hosted Postgres also works.
+2. In `prisma/schema.prisma`, change `provider = "sqlite"` to
+   `provider = "postgresql"`.
+3. Put the pooled connection string in `.env` as `DATABASE_URL` and run
+   `npm run db:push` (add `npm run db:seed` if you want the demo workspace).
+4. Import the GitHub repo at [vercel.com/new](https://vercel.com/new) —
+   `postinstall` runs `prisma generate` automatically, and `vercel.json`
+   registers a daily cron (01:00 UTC) that delivers due reminders.
+5. Set Vercel environment variables: `DATABASE_URL`, `CRON_SECRET` (protects
+   the cron endpoint; Vercel sends it automatically), and optionally
+   `RESEND_API_KEY` + `EMAIL_FROM` for real email and `JOB_SECRET` for
+   external schedulers.
