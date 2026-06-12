@@ -126,6 +126,14 @@ marked delivered. The job is idempotent.
 projected charges plus trial cancel-by deadlines — the "Export calendar"
 button on the subscriptions page downloads it for Google/Apple Calendar.
 
+The send job also generates workspace alerts (deduped per month): budget
+approaching/exceeded notifications, and a monthly review prompt when enabled
+in settings. Failed email sends retry with capped exponential backoff before
+being marked Failed, quiet hours in settings hold due reminders until they
+end, trials carry a "worth keeping?" verdict prompt, each subscription can
+schedule account-email/password maintenance nudges (passwords are never
+stored), and onboarding is a live checklist computed from your data.
+
 ## CSV Import
 
 The import flow is available at `/import/csv`. Users can download the template,

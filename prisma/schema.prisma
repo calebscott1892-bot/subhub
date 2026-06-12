@@ -23,6 +23,8 @@ model ReminderSettings {
   trialReminders   Boolean  @default(true)
   renewalReminders Boolean  @default(true)
   monthlyReview    Boolean  @default(false)
+  quietHoursStart  Int?
+  quietHoursEnd    Int?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -73,6 +75,7 @@ model Subscription {
   splitType               String?
   cancellationRequestedAt String?
   cancellationNotes       String?
+  trialValueVerdict       String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -203,6 +206,8 @@ model Notification {
   payloadTitle   String
   payloadBody    String
   payloadUrl     String?
+  attemptCount   Int       @default(0)
+  lastError      String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

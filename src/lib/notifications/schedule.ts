@@ -1,6 +1,12 @@
 import type { Subscription } from "@/lib/subscriptions/types";
 
-export type NotificationType = "CancelBySoon" | "RenewalSoon";
+export type NotificationType =
+  | "CancelBySoon"
+  | "RenewalSoon"
+  | "BudgetExceeded"
+  | "BudgetApproaching"
+  | "MonthlyReview"
+  | "AccountMaintenance";
 export type NotificationChannel = "InApp" | "Email";
 
 export type NotificationSchedule = {
@@ -205,6 +211,16 @@ function parseDateOnly(dateOnly: string): Date | null {
   }
 
   return date;
+}
+
+// Public wrapper so other schedule builders (e.g. maintenance reminders) can
+// compute a local-morning send time without duplicating timezone math.
+export function reminderTimeUtcIso(
+  dateOnly: string,
+  timezone: string,
+  hour = 9,
+): string {
+  return zonedDateTimeToUtcIso(dateOnly, hour, timezone);
 }
 
 function zonedDateTimeToUtcIso(

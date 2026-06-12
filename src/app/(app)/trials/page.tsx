@@ -5,6 +5,7 @@ import { daysUntil } from "@/lib/subscriptions/dates";
 import { requireUserId } from "@/lib/auth/session";
 import { listSubscriptions } from "@/lib/subscriptions/repository";
 import { getTrialDeadline } from "@/lib/subscriptions/selectors";
+import { recordTrialVerdictAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -50,17 +51,29 @@ export default async function TrialsPage() {
             trials.map((subscription) => {
               const deadline = getTrialDeadline(subscription);
               const daysAway = deadline ? daysUntil(deadline, today) : null;
+              const keepAction = recordTrialVerdictAction.bind(
+                null,
+                subscription.id,
+                "Keep" as const,
+              );
+              const cancelAction = recordTrialVerdictAction.bind(
+                null,
+                subscription.id,
+                "Cancel" as const,
+              );
 
               return (
-                <Link
-                  href={`/subscriptions/${subscription.id}`}
+                <div
                   key={subscription.id}
-                  className="grid gap-3 px-5 py-4 transition hover:bg-[#fff4c7] md:grid-cols-[1fr_auto_auto] md:items-center"
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_auto_auto] md:items-center"
                 >
                   <div>
-                    <p className="font-semibold text-[#3e2f00]">
+                    <Link
+                      href={`/subscriptions/${subscription.id}`}
+                      className="font-semibold text-[#3e2f00] hover:underline"
+                    >
                       {subscription.providerName}
-                    </p>
+                    </Link>
                     <p className="mt-1 text-sm text-[#7a640f]">
                       Converts to{" "}
                       {formatCurrency(
@@ -69,6 +82,35 @@ export default async function TrialsPage() {
                         subscription.currency,
                       )}
                     </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[#7a640f]">
+                        Worth keeping?
+                      </span>
+                      <form action={keepAction}>
+                        <button
+                          type="submit"
+                          className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
+                            subscription.trialValueVerdict === "Keep"
+                              ? "border-[#176143] bg-[#eaf5ec] text-[#176143]"
+                              : "border-[#c9b66b] bg-white text-[#604400] hover:bg-[#fff4c7]"
+                          }`}
+                        >
+                          Yes, keep it
+                        </button>
+                      </form>
+                      <form action={cancelAction}>
+                        <button
+                          type="submit"
+                          className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
+                            subscription.trialValueVerdict === "Cancel"
+                              ? "border-[#8f332b] bg-[#fff7f6] text-[#8f332b]"
+                              : "border-[#c9b66b] bg-white text-[#604400] hover:bg-[#fff4c7]"
+                          }`}
+                        >
+                          No, plan to cancel
+                        </button>
+                      </form>
+                    </div>
                   </div>
                   <StatusPill status={subscription.status} />
                   <div className="text-left md:text-right">
@@ -79,7 +121,7 @@ export default async function TrialsPage() {
                       {daysAway === null ? "No deadline" : `${daysAway} days left`}
                     </p>
                   </div>
-                </Link>
+                </div>
               );
             })
           ) : (

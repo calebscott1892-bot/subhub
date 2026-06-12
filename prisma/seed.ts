@@ -181,6 +181,7 @@ async function main() {
         splitType: subscription.splitType ?? null,
         cancellationRequestedAt: null,
         cancellationNotes: null,
+        trialValueVerdict: null,
         providerName: subscription.providerName,
         category: subscription.category,
         status: subscription.status,

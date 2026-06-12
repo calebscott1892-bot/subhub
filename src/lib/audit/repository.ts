@@ -9,6 +9,7 @@ export type AuditAction =
   | "PriceChange"
   | "CancellationRequested"
   | "MarkedCanceled"
+  | "TrialVerdict"
   | "SharingChanged"
   | "Imported"
   | "DetectionAccepted"

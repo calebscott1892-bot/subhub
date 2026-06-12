@@ -52,6 +52,7 @@ export type Subscription = {
   splitType?: SplitType | null;
   cancellationRequestedAt?: string | null;
   cancellationNotes?: string | null;
+  trialValueVerdict?: "Keep" | "Cancel" | null;
   createdAt: string;
   updatedAt: string;
 };

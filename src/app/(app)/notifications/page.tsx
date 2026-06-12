@@ -15,16 +15,23 @@ export const dynamic = "force-dynamic";
 export default async function NotificationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ processed?: string; sent?: string; failed?: string }>;
+  searchParams: Promise<{
+    processed?: string;
+    sent?: string;
+    failed?: string;
+    deferred?: string;
+  }>;
 }) {
   const userId = await requireUserId();
   const params = await searchParams;
   const notifications = await listNotifications(userId);
-  const sendSummary = params.processed
-    ? params.processed === "0"
-      ? "Nothing was due. Reminders send once their scheduled time passes."
-      : `Processed ${params.processed} due reminder${params.processed === "1" ? "" : "s"}: ${params.sent} sent, ${params.failed} failed.`
-    : null;
+  const sendSummary = params.deferred
+    ? "Inside your quiet hours - due reminders will send once they end."
+    : params.processed
+      ? params.processed === "0"
+        ? "Nothing was due. Reminders send once their scheduled time passes."
+        : `Processed ${params.processed} due reminder${params.processed === "1" ? "" : "s"}: ${params.sent} sent, ${params.failed} failed.`
+      : null;
 
   return (
     <div className="space-y-6">
@@ -121,9 +128,17 @@ export default async function NotificationsPage({
                     {formatDateTime(notification.scheduledFor)}
                   </p>
                   <div className="flex items-center gap-3">
-                    <p className="text-sm font-semibold text-[#34443f]">
-                      {notification.status}
-                    </p>
+                    <div>
+                      <p className="text-sm font-semibold text-[#34443f]">
+                        {notification.status}
+                      </p>
+                      {notification.status === "Failed" && notification.lastError ? (
+                        <p className="text-xs text-[#8f332b]">
+                          {notification.attemptCount} attempts:{" "}
+                          {notification.lastError}
+                        </p>
+                      ) : null}
+                    </div>
                     {isUnread ? (
                       <form action={markRead}>
                         <button

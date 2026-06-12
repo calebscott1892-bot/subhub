@@ -31,6 +31,7 @@ type SubscriptionRecord = {
   splitType: string | null;
   cancellationRequestedAt: string | null;
   cancellationNotes: string | null;
+  trialValueVerdict: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -93,6 +94,7 @@ export async function createSubscription(
       splitType: null,
       cancellationRequestedAt: null,
       cancellationNotes: null,
+      trialValueVerdict: null,
       createdAt: now,
       updatedAt: now,
       ...input,
@@ -130,6 +132,7 @@ export async function updateCancellationState(
     status?: Subscription["status"];
     cancellationRequestedAt?: string | null;
     cancellationNotes?: string | null;
+    trialValueVerdict?: string | null;
   },
   store: SubscriptionStore = prisma,
 ): Promise<Subscription | null> {
@@ -185,6 +188,8 @@ function mapSubscriptionRecord(record: SubscriptionRecord): Subscription {
     splitType: record.splitType as Subscription["splitType"],
     cancellationRequestedAt: record.cancellationRequestedAt,
     cancellationNotes: record.cancellationNotes,
+    trialValueVerdict:
+      record.trialValueVerdict as Subscription["trialValueVerdict"],
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };

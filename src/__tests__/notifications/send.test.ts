@@ -23,7 +23,7 @@ describe("send due notifications", () => {
       store,
     });
 
-    expect(result).toEqual({ processed: 2, sent: 2, failed: 0 });
+    expect(result).toEqual({ processed: 2, sent: 2, failed: 0, deferred: false });
     expect(transport.messages).toHaveLength(1);
     expect(transport.messages[0].to).toBe("demo@subhub.local");
     expect(statusOf(store, "due-email")).toBe("Sent");
@@ -31,7 +31,7 @@ describe("send due notifications", () => {
     expect(statusOf(store, "future")).toBe("Scheduled");
   });
 
-  test("marks notifications failed when the transport rejects them", async () => {
+  test("failed sends back off and retry before giving up", async () => {
     const store = createFakeStore([
       makeRecord({ id: "due-email", channel: "Email", scheduledFor: "2026-06-12T08:00:00.000Z" }),
     ]);
@@ -48,8 +48,64 @@ describe("send due notifications", () => {
       store,
     });
 
-    expect(result).toEqual({ processed: 1, sent: 0, failed: 1 });
-    expect(statusOf(store, "due-email")).toBe("Failed");
+    expect(result).toEqual({ processed: 1, sent: 0, failed: 1, deferred: false });
+    // First failure schedules a retry instead of giving up.
+    expect(store.records[0]).toMatchObject({
+      status: "Scheduled",
+      attemptCount: 1,
+      lastError: "boom",
+    });
+    expect(store.records[0].scheduledFor.getTime()).toBeGreaterThan(
+      now.getTime(),
+    );
+  });
+
+  test("exhausted attempts mark the notification failed", async () => {
+    const record = makeRecord({
+      id: "due-email",
+      channel: "Email",
+      scheduledFor: "2026-06-12T08:00:00.000Z",
+    });
+    record.attemptCount = 2;
+    const store = createFakeStore([record]);
+    const transport: EmailTransport = {
+      name: "broken",
+      send: async () => ({ ok: false, error: "boom" }),
+    };
+
+    await sendDueNotifications({
+      userId: "user-1",
+      recipientEmail: "demo@subhub.local",
+      now,
+      transport,
+      store,
+    });
+
+    expect(store.records[0]).toMatchObject({
+      status: "Failed",
+      attemptCount: 3,
+      lastError: "boom",
+    });
+  });
+
+  test("defers everything inside quiet hours", async () => {
+    const store = createFakeStore([
+      makeRecord({ id: "due-email", channel: "Email", scheduledFor: "2026-06-12T08:00:00.000Z" }),
+    ]);
+    const transport = createRecordingTransport();
+
+    const result = await sendDueNotifications({
+      userId: "user-1",
+      recipientEmail: "demo@subhub.local",
+      now: new Date("2026-06-12T23:30:00.000Z"),
+      transport,
+      store,
+      quietHours: { startHour: 22, endHour: 7, timezone: "UTC" },
+    });
+
+    expect(result).toEqual({ processed: 0, sent: 0, failed: 0, deferred: true });
+    expect(transport.messages).toHaveLength(0);
+    expect(statusOf(store, "due-email")).toBe("Scheduled");
   });
 
   test("is idempotent across repeat runs", async () => {
@@ -100,6 +156,8 @@ function makeRecord(overrides: {
     payloadTitle: "Netflix renews soon",
     payloadBody: "Netflix charges in 7 days.",
     payloadUrl: "/subscriptions/netflix",
+    attemptCount: 0,
+    lastError: null as string | null,
     createdAt: new Date("2026-06-01T00:00:00.000Z"),
     updatedAt: new Date("2026-06-01T00:00:00.000Z"),
   };

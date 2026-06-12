@@ -22,7 +22,10 @@ export const TIMEZONE_OPTIONS = [
 
 export type UserSettings = ReminderPreferences & {
   timezone: string;
+  timezoneSet: boolean;
   monthlyReview: boolean;
+  quietHoursStart: number | null;
+  quietHoursEnd: number | null;
 };
 
 export async function getUserSettings(userId: string): Promise<UserSettings> {
@@ -33,9 +36,12 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
 
   return {
     timezone: user?.timezone ?? DEFAULT_TIMEZONE,
+    timezoneSet: Boolean(user?.timezone),
     trialReminders: reminders?.trialReminders ?? true,
     renewalReminders: reminders?.renewalReminders ?? true,
     monthlyReview: reminders?.monthlyReview ?? false,
+    quietHoursStart: reminders?.quietHoursStart ?? null,
+    quietHoursEnd: reminders?.quietHoursEnd ?? null,
   };
 }
 
@@ -51,7 +57,11 @@ export async function saveProfile(
 
 export async function saveReminderSettings(
   userId: string,
-  input: ReminderPreferences & { monthlyReview: boolean },
+  input: ReminderPreferences & {
+    monthlyReview: boolean;
+    quietHoursStart: number | null;
+    quietHoursEnd: number | null;
+  },
 ): Promise<void> {
   await prisma.reminderSettings.upsert({
     where: { userId },

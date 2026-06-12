@@ -6,8 +6,14 @@ import {
   listHouseholdMembers,
   setSubscriptionSharing,
 } from "@/lib/household/repository";
-import { cancelFutureNotificationsForSubscription } from "@/lib/notifications/repository";
+import { buildMaintenanceReminderSchedule } from "@/lib/notifications/alerts";
+import {
+  cancelFutureNotificationsForSubscription,
+  upsertNotificationSchedules,
+} from "@/lib/notifications/repository";
 import { refreshSubscriptionNotifications } from "@/lib/notifications/refresh";
+import { reminderTimeUtcIso } from "@/lib/notifications/schedule";
+import { getUserSettings } from "@/lib/settings/repository";
 import { computeSplit } from "@/lib/sharing/split-rules";
 import { parseSharingFormData } from "@/lib/sharing/validation";
 import { calculateMonthlyCost } from "@/lib/subscriptions/costs";
@@ -211,6 +217,44 @@ export async function markCanceledAction(id: string) {
   revalidatePath("/budget");
   revalidatePath("/notifications");
   redirect(`/subscriptions/${id}`);
+}
+
+export async function scheduleMaintenanceReminderAction(
+  id: string,
+  formData: FormData,
+) {
+  const userId = await requireUserId();
+  const kind = String(formData.get("kind") ?? "");
+  const date = String(formData.get("date") ?? "").trim();
+
+  if (kind !== "account-email" && kind !== "password") {
+    throw new Error("Choose a supported maintenance reminder type.");
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error("Pick a reminder date.");
+  }
+
+  const subscription = await getSubscriptionById(userId, id);
+
+  if (!subscription) {
+    redirect("/subscriptions");
+  }
+
+  const settings = await getUserSettings(userId);
+
+  await upsertNotificationSchedules([
+    buildMaintenanceReminderSchedule({
+      userId,
+      subscriptionId: id,
+      providerName: subscription.providerName,
+      kind,
+      date,
+      scheduledForIso: reminderTimeUtcIso(date, settings.timezone),
+    }),
+  ]);
+  revalidatePath("/notifications");
+  redirect("/notifications");
 }
 
 function formatValidationErrors(errors: Record<string, string>): string {

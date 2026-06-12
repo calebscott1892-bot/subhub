@@ -20,6 +20,8 @@ export type Notification = {
     body: string;
     url: string | null;
   };
+  attemptCount: number;
+  lastError: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -38,6 +40,8 @@ type NotificationRecord = {
   payloadTitle: string;
   payloadBody: string;
   payloadUrl: string | null;
+  attemptCount: number;
+  lastError: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -104,6 +108,8 @@ export async function upsertNotificationSchedules(
           payloadTitle: schedule.payload.title,
           payloadBody: schedule.payload.body,
           payloadUrl: schedule.payload.url,
+          attemptCount: 0,
+          lastError: null,
           createdAt: now,
           updatedAt: now,
         },
@@ -141,6 +147,40 @@ export async function listDueNotifications(
   });
 
   return records.map(mapNotificationRecord);
+}
+
+export async function recordNotificationFailure(
+  userId: string,
+  id: string,
+  failure: {
+    attemptCount: number;
+    lastError: string;
+    outcome: "Failed" | "Retry";
+    retryAt: Date;
+  },
+  at: Date,
+  store: NotificationStore = prisma,
+): Promise<boolean> {
+  const result = await store.notification.updateMany({
+    where: { id, userId },
+    data:
+      failure.outcome === "Failed"
+        ? {
+            status: "Failed",
+            attemptCount: failure.attemptCount,
+            lastError: failure.lastError,
+            updatedAt: at,
+          }
+        : {
+            status: "Scheduled",
+            attemptCount: failure.attemptCount,
+            lastError: failure.lastError,
+            scheduledFor: failure.retryAt,
+            updatedAt: at,
+          },
+  });
+
+  return result.count > 0;
 }
 
 export async function markNotificationOutcome(
@@ -230,6 +270,8 @@ function mapNotificationRecord(record: NotificationRecord): Notification {
       body: record.payloadBody,
       url: record.payloadUrl,
     },
+    attemptCount: record.attemptCount,
+    lastError: record.lastError,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };

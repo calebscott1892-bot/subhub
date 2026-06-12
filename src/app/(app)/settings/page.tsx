@@ -132,6 +132,25 @@ export default async function SettingsPage({
               Monthly subscription review reminder
             </span>
           </label>
+          <div className="rounded-md border border-[#e5ebe6] p-3">
+            <p className="text-sm font-medium">Quiet hours</p>
+            <p className="mt-1 text-xs text-[#68766f]">
+              Due reminders wait until quiet hours end. Leave both on
+              &quot;Off&quot; to disable.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+              <QuietHourSelect
+                name="quietHoursStart"
+                label="From"
+                value={settings.quietHoursStart}
+              />
+              <QuietHourSelect
+                name="quietHoursEnd"
+                label="Until"
+                value={settings.quietHoursEnd}
+              />
+            </div>
+          </div>
           <button
             type="submit"
             className="w-fit rounded-md bg-[#16362f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#214d43]"
@@ -156,6 +175,7 @@ export default async function SettingsPage({
         </a>
       </section>
 
+      {/* Danger zone */}
       <form
         action={deleteAccountAction}
         className="rounded-lg border border-[#dfc4c2] bg-[#fff7f6] p-5"
@@ -181,5 +201,33 @@ export default async function SettingsPage({
         </button>
       </form>
     </div>
+  );
+}
+
+function QuietHourSelect({
+  name,
+  label,
+  value,
+}: {
+  name: string;
+  label: string;
+  value: number | null;
+}) {
+  return (
+    <label className="flex items-center gap-2">
+      <span className="text-[#34443f]">{label}</span>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        className="rounded-md border border-[#cbd8d0] bg-white px-2 py-1.5 text-sm outline-none focus:border-[#176143]"
+      >
+        <option value="">Off</option>
+        {Array.from({ length: 24 }, (_, hour) => (
+          <option key={hour} value={hour}>
+            {hour.toString().padStart(2, "0")}:00
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

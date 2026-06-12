@@ -17,6 +17,7 @@ import {
   markCancellationRequestedAction,
   markCanceledAction,
   saveSubscriptionSharingAction,
+  scheduleMaintenanceReminderAction,
   updateSubscriptionAction,
 } from "../actions";
 
@@ -61,6 +62,10 @@ export default async function SubscriptionDetailPage({
     subscription.id,
   );
   const markCanceled = markCanceledAction.bind(null, subscription.id);
+  const maintenanceAction = scheduleMaintenanceReminderAction.bind(
+    null,
+    subscription.id,
+  );
 
   return (
     <div className="space-y-6">
@@ -153,6 +158,37 @@ export default async function SubscriptionDetailPage({
             <ActionLink label="Manage billing" href={subscription.billingUrl} />
             <ActionLink label="Cancel or unsubscribe" href={subscription.cancelUrl} />
             <ActionLink label="Support" href={subscription.supportUrl} />
+          </div>
+          <div className="mt-6 rounded-md border border-[#e5ebe6] bg-[#f8faf7] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#68766f]">
+              Maintenance reminder
+            </p>
+            <p className="mt-2 text-xs leading-5 text-[#68766f]">
+              Get nudged to update the account email or rotate the password.
+              Passwords are never stored here.
+            </p>
+            <form action={maintenanceAction} className="mt-3 space-y-2">
+              <select
+                name="kind"
+                defaultValue="password"
+                className="w-full rounded-md border border-[#cbd8d0] bg-white px-2.5 py-1.5 text-sm focus:border-[#176143] focus:outline-none"
+              >
+                <option value="password">Rotate provider password</option>
+                <option value="account-email">Review account email</option>
+              </select>
+              <input
+                type="date"
+                name="date"
+                required
+                className="w-full rounded-md border border-[#cbd8d0] bg-white px-2.5 py-1.5 text-sm focus:border-[#176143] focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="w-full rounded-md border border-[#cbd8d0] bg-white px-3 py-1.5 text-sm font-semibold text-[#34443f] transition hover:bg-[#edf2ed]"
+              >
+                Schedule reminder
+              </button>
+            </form>
           </div>
         </aside>
       </section>

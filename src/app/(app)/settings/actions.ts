@@ -32,9 +32,19 @@ export async function saveReminderSettingsAction(formData: FormData) {
     trialReminders: formData.get("trialReminders") === "on",
     renewalReminders: formData.get("renewalReminders") === "on",
     monthlyReview: formData.get("monthlyReview") === "on",
+    quietHoursStart: parseHour(formData.get("quietHoursStart")),
+    quietHoursEnd: parseHour(formData.get("quietHoursEnd")),
   });
   revalidatePath("/settings");
   redirect("/settings?saved=reminders");
+}
+
+function parseHour(value: FormDataEntryValue | null): number | null {
+  const parsed = Number(String(value ?? ""));
+
+  return Number.isInteger(parsed) && parsed >= 0 && parsed <= 23
+    ? parsed
+    : null;
 }
 
 export async function deleteAccountAction(formData: FormData) {
