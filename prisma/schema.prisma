@@ -115,6 +115,31 @@ model CategoryBudget {
   @@index([userId])
 }
 
+model DetectedCandidate {
+  id                    String   @id
+  userId                String
+  merchantLabel         String
+  normalizedMerchant    String
+  billingCadence        String
+  intervalDays          Int?
+  lastAmount            Float
+  averageAmount         Float
+  occurrenceCount       Int
+  firstChargeDate       String
+  lastChargeDate        String
+  nextEstimatedCharge   String?
+  confidence            Float
+  categoryGuess         String
+  evidenceJson          String
+  status                String
+  matchedSubscriptionId String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([userId, normalizedMerchant])
+  @@index([userId, status])
+}
+
 model Notification {
   id             String    @id
   userId         String

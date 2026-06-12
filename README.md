@@ -84,6 +84,22 @@ add up to the real bill. When anything is shared, the dashboard and budget
 pages track your personal share (what you actually pay) alongside the gross
 bill, and the household page totals what each member owes per month.
 
+## Detected Subscriptions
+
+The `/detected` page finds recurring charges in bank statement exports —
+no bank connection needed. Paste or upload a transactions CSV (columns:
+date, description, amount; dates in YYYY-MM-DD or DD/MM/YYYY) and the
+detector groups charges by normalized merchant, infers the cadence
+(weekly/monthly/yearly/custom interval), tolerates price changes, and scores
+each candidate with confidence plus the transaction evidence.
+
+Everything passes through a review queue: accept creates a subscription with
+reminders scheduled, candidates matching an existing subscription offer a
+merge instead (never a duplicate), and dismissed candidates stay out of the
+queue on future scans. A built-in sample bank export demonstrates the flow in
+one click. Plaid and email scanning later become additional sources feeding
+this same queue.
+
 ## CSV Import
 
 The import flow is available at `/import/csv`. Users can download the template,

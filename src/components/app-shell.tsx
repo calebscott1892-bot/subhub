@@ -7,6 +7,7 @@ const navItems = [
   { href: "/budget", label: "Budget" },
   { href: "/household", label: "Household" },
   { href: "/import/csv", label: "Import" },
+  { href: "/detected", label: "Detected" },
   { href: "/trials", label: "Trials" },
   { href: "/notifications", label: "Notifications" },
   { href: "/onboarding", label: "Onboarding" },
