@@ -4,26 +4,54 @@ import {
   listNotifications,
 } from "@/lib/notifications/repository";
 import { requireUserId } from "@/lib/auth/session";
+import { sendDueNotificationsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ processed?: string; sent?: string; failed?: string }>;
+}) {
   const userId = await requireUserId();
+  const params = await searchParams;
   const notifications = await listNotifications(userId);
+  const sendSummary = params.processed
+    ? params.processed === "0"
+      ? "Nothing was due. Reminders send once their scheduled time passes."
+      : `Processed ${params.processed} due reminder${params.processed === "1" ? "" : "s"}: ${params.sent} sent, ${params.failed} failed.`
+    : null;
 
   return (
     <div className="space-y-6">
-      <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#68766f]">
-          Notifications
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold md:text-5xl">
-          Scheduled reminders
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#68766f]">
-          This pass creates in-app reminder records. Email delivery and background sending come next.
-        </p>
+      <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[#68766f]">
+            Notifications
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold md:text-5xl">
+            Scheduled reminders
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#68766f]">
+            Reminders are scheduled here, then delivered by the send job. Email
+            uses the local log transport until a provider key is configured.
+          </p>
+        </div>
+        <form action={sendDueNotificationsAction}>
+          <button
+            type="submit"
+            className="rounded-md bg-[#16362f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#214d43]"
+          >
+            Send due reminders now
+          </button>
+        </form>
       </section>
+
+      {sendSummary ? (
+        <p className="rounded-md border border-[#bcd8c3] bg-[#eaf5ec] px-4 py-3 text-sm text-[#176143]">
+          {sendSummary}
+        </p>
+      ) : null}
 
       <section className="rounded-lg border border-[#dbe3dc] bg-white">
         <div className="grid gap-3 border-b border-[#e5ebe6] px-5 py-4 md:grid-cols-[180px_1fr_180px_120px]">

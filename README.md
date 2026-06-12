@@ -100,6 +100,19 @@ queue on future scans. A built-in sample bank export demonstrates the flow in
 one click. Plaid and email scanning later become additional sources feeding
 this same queue.
 
+## Reminders, Email, And Calendar
+
+Reminders are scheduled rows that a send job delivers. "Send due reminders
+now" on `/notifications` (or `POST /api/jobs/send-notifications`, guarded by
+`JOB_SECRET` for external schedulers) processes everything due: email
+reminders go through the transport in `src/lib/email/provider.ts` (a local
+log transport until a Resend key is configured) and in-app reminders are
+marked delivered. The job is idempotent.
+
+`/api/calendar` exports an auth-guarded `.ics` file of the next year of
+projected charges plus trial cancel-by deadlines — the "Export calendar"
+button on the subscriptions page downloads it for Google/Apple Calendar.
+
 ## CSV Import
 
 The import flow is available at `/import/csv`. Users can download the template,

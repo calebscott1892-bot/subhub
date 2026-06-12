@@ -50,15 +50,20 @@ export type NotificationStore = {
       create: NotificationRecord;
     }): Promise<NotificationRecord>;
     findMany(args: {
-      where: { userId: string };
+      where: {
+        userId: string;
+        status?: string;
+        scheduledFor?: { lte: Date };
+      };
       orderBy?: Array<Record<string, string>>;
     }): Promise<NotificationRecord[]>;
     updateMany(args: {
       where: {
+        id?: string;
         userId: string;
-        subscriptionId: string;
-        status: string;
-        scheduledFor: { gte: Date };
+        subscriptionId?: string;
+        status?: string;
+        scheduledFor?: { gte: Date };
       };
       data: Partial<NotificationRecord>;
     }): Promise<{ count: number }>;
@@ -118,6 +123,42 @@ export async function listNotifications(
   });
 
   return records.map(mapNotificationRecord);
+}
+
+export async function listDueNotifications(
+  userId: string,
+  now: Date,
+  store: NotificationStore = prisma,
+): Promise<Notification[]> {
+  const records = await store.notification.findMany({
+    where: {
+      userId,
+      status: "Scheduled",
+      scheduledFor: { lte: now },
+    },
+    orderBy: [{ scheduledFor: "asc" }],
+  });
+
+  return records.map(mapNotificationRecord);
+}
+
+export async function markNotificationOutcome(
+  userId: string,
+  id: string,
+  outcome: "Sent" | "Failed",
+  at: Date,
+  store: NotificationStore = prisma,
+): Promise<boolean> {
+  const result = await store.notification.updateMany({
+    where: { id, userId },
+    data: {
+      status: outcome,
+      sentAt: outcome === "Sent" ? at : null,
+      updatedAt: at,
+    },
+  });
+
+  return result.count > 0;
 }
 
 export async function cancelFutureNotificationsForSubscription(

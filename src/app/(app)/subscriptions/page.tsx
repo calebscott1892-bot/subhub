@@ -29,6 +29,12 @@ export default async function SubscriptionsPage({
           </h1>
         </div>
         <div className="flex flex-wrap gap-3">
+          <a
+            href="/api/calendar"
+            className="w-fit rounded-md border border-[#cbd8d0] bg-white px-4 py-2.5 text-sm font-semibold text-[#22312d]"
+          >
+            Export calendar (.ics)
+          </a>
           <Link
             href="/import/csv"
             className="w-fit rounded-md border border-[#cbd8d0] bg-white px-4 py-2.5 text-sm font-semibold text-[#22312d]"
