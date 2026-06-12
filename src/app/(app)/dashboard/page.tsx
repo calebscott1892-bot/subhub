@@ -6,10 +6,12 @@ import {
 } from "@/components/budget-progress";
 import { InsightsPanel } from "@/components/insights-panel";
 import { StatusPill } from "@/components/status-pill";
+import { listRecentAuditEvents } from "@/lib/audit/repository";
 import { progressAgainstTarget } from "@/lib/budget/calculate-budget";
 import { getUpcomingCharges } from "@/lib/budget/forecast";
 import { getBudgetSettings } from "@/lib/budget/repository";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { listPriceChanges } from "@/lib/subscriptions/price-history";
 import { getSharesForSubscriptions } from "@/lib/household/repository";
 import { getSubscriptionInsights } from "@/lib/insights/get-insights";
 import { summarizeSharedSpend } from "@/lib/sharing/personal-cost";
@@ -37,7 +39,9 @@ export default async function DashboardPage() {
   const spend = summarizeSharedSpend(subscriptions, shares);
   const upcomingCharges = getUpcomingCharges(subscriptions, today, 45).slice(0, 5);
   const trials = getTrialsEndingSoon(subscriptions, today, 14);
-  const insights = getSubscriptionInsights(subscriptions, today);
+  const priceChanges = await listPriceChanges(userId);
+  const recentEvents = await listRecentAuditEvents(userId, 6);
+  const insights = getSubscriptionInsights(subscriptions, today, priceChanges);
   const budgetProgress = progressAgainstTarget(
     spend.personalMonthly,
     budgetSettings.monthlyTarget,
@@ -238,6 +242,56 @@ export default async function DashboardPage() {
       </section>
 
       <InsightsPanel insights={insights} currency={currency} />
+
+      <section className="rounded-lg border border-[#dbe3dc] bg-white">
+        <div className="border-b border-[#e5ebe6] px-5 py-4">
+          <h2 className="text-lg font-semibold">Recent changes</h2>
+          <p className="text-sm text-[#68766f]">
+            The audit trail of everything that happened in your workspace.
+          </p>
+        </div>
+        <div className="divide-y divide-[#edf1ed]">
+          {recentEvents.length > 0 ? (
+            recentEvents.map((event) => {
+              const row = (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className="rounded-full border border-[#cbd8d0] bg-[#f3f7f2] px-2.5 py-1 text-xs font-semibold text-[#34443f]">
+                      {event.action}
+                    </span>
+                    <p className="text-sm text-[#16201d]">{event.summary}</p>
+                  </div>
+                  <p className="text-xs text-[#68766f]">
+                    {formatDateTime(event.createdAt)}
+                  </p>
+                </>
+              );
+
+              return event.entityType === "subscription" ? (
+                <Link
+                  key={event.id}
+                  href={`/subscriptions/${event.entityId}`}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 transition hover:bg-[#f7faf7]"
+                >
+                  {row}
+                </Link>
+              ) : (
+                <div
+                  key={event.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+                >
+                  {row}
+                </div>
+              );
+            })
+          ) : (
+            <div className="px-5 py-6 text-sm text-[#68766f]">
+              No changes recorded yet. Edits, imports, and cancellations will
+              show up here.
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

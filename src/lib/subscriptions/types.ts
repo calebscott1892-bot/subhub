@@ -50,6 +50,8 @@ export type Subscription = {
   lastUsageDate?: string | null;
   isShared?: boolean;
   splitType?: SplitType | null;
+  cancellationRequestedAt?: string | null;
+  cancellationNotes?: string | null;
   createdAt: string;
   updatedAt: string;
 };

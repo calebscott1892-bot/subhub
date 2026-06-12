@@ -185,6 +185,8 @@ function makeRecord(overrides: Partial<{
     lastUsageDate: null,
     isShared: false,
     splitType: null,
+    cancellationRequestedAt: null,
+    cancellationNotes: null,
     createdAt: new Date("2026-05-19T00:00:00.000Z"),
     updatedAt: new Date("2026-05-19T00:00:00.000Z"),
   };

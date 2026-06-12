@@ -54,7 +54,20 @@ The seed creates a demo account preloaded with sample data:
 demo@subhub.local / subhub-demo
 ```
 
-New accounts created through `/signup` start with an empty workspace.
+New accounts created through `/signup` start with an empty workspace. Login
+is rate limited (5 failed attempts locks the email for 15 minutes), every
+change is captured in a per-user audit trail (shown as "Recent changes" on
+the dashboard and "History" on each subscription), and `/settings` manages
+your profile, timezone, reminder preferences, full JSON data export, and
+permanent account deletion.
+
+## Cancellation Workflow
+
+Each subscription detail page has an action panel for cancellation: record
+that you requested cancellation (with notes), generate a ready-to-send
+support email draft, and mark the subscription canceled once the provider
+confirms — which stops its future reminders. Price edits are tracked as
+price-change history and surface as insights when a price rises.
 
 ## Budget And Insights
 

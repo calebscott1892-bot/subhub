@@ -72,12 +72,18 @@ async function main() {
 
   await prisma.user.upsert({
     where: { id: demoUserId },
-    update: { email: demoUserEmail, passwordHash, displayName: "Demo" },
+    update: {
+      email: demoUserEmail,
+      passwordHash,
+      displayName: "Demo",
+      timezone: seedTimezone,
+    },
     create: {
       id: demoUserId,
       email: demoUserEmail,
       passwordHash,
       displayName: "Demo",
+      timezone: seedTimezone,
     },
   });
 
@@ -173,6 +179,8 @@ async function main() {
         userId: demoUserId,
         isShared: subscription.isShared ?? false,
         splitType: subscription.splitType ?? null,
+        cancellationRequestedAt: null,
+        cancellationNotes: null,
         providerName: subscription.providerName,
         category: subscription.category,
         status: subscription.status,

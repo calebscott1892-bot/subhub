@@ -64,6 +64,7 @@ export type NotificationStore = {
         subscriptionId?: string;
         status?: string;
         scheduledFor?: { gte: Date };
+        readAt?: null;
       };
       data: Partial<NotificationRecord>;
     }): Promise<{ count: number }>;
@@ -159,6 +160,33 @@ export async function markNotificationOutcome(
   });
 
   return result.count > 0;
+}
+
+export async function markNotificationRead(
+  userId: string,
+  id: string,
+  at: Date,
+  store: NotificationStore = prisma,
+): Promise<boolean> {
+  const result = await store.notification.updateMany({
+    where: { id, userId },
+    data: { readAt: at, updatedAt: at },
+  });
+
+  return result.count > 0;
+}
+
+export async function markAllNotificationsRead(
+  userId: string,
+  at: Date,
+  store: NotificationStore = prisma,
+): Promise<number> {
+  const result = await store.notification.updateMany({
+    where: { userId, readAt: null },
+    data: { readAt: at, updatedAt: at },
+  });
+
+  return result.count;
 }
 
 export async function cancelFutureNotificationsForSubscription(

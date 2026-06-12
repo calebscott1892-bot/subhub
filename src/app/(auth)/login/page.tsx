@@ -6,6 +6,8 @@ import { loginAction } from "../actions";
 const ERROR_MESSAGES: Record<string, string> = {
   missing: "Enter your email and password.",
   invalid: "That email and password combination does not match.",
+  locked:
+    "Too many failed attempts. Wait 15 minutes before trying this email again.",
 };
 
 export default async function LoginPage({

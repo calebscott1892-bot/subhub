@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { recordAuditEvent } from "@/lib/audit/repository";
 import { requireUserId } from "@/lib/auth/session";
 import { parseTransactionsCsv } from "@/lib/detection/parse-transactions";
 import { detectRecurringCharges } from "@/lib/detection/recurring";
@@ -12,11 +13,7 @@ import {
   type DetectedCandidate,
 } from "@/lib/detection/repository";
 import { buildSampleTransactionsCsv } from "@/lib/detection/sample-transactions";
-import {
-  cancelFutureNotificationsForSubscription,
-  upsertNotificationSchedules,
-} from "@/lib/notifications/repository";
-import { buildNotificationSchedules } from "@/lib/notifications/schedule";
+import { refreshSubscriptionNotifications } from "@/lib/notifications/refresh";
 import {
   createSubscription,
   listSubscriptions,
@@ -72,6 +69,12 @@ export async function acceptCandidateAction(id: string) {
   // a duplicate record.
   if (candidate.matchedSubscriptionId) {
     await setCandidateStatus(userId, id, "Merged");
+    await recordAuditEvent(userId, {
+      entityType: "subscription",
+      entityId: candidate.matchedSubscriptionId,
+      action: "DetectionAccepted",
+      summary: `Detected "${candidate.merchantLabel}" merged into an existing subscription`,
+    });
     revalidatePath("/detected");
     redirect("/detected");
   }
@@ -100,20 +103,14 @@ export async function acceptCandidateAction(id: string) {
     lastUsageDate: null,
   });
 
-  await cancelFutureNotificationsForSubscription(
-    userId,
-    subscription.id,
-    new Date(),
-  );
-  await upsertNotificationSchedules(
-    buildNotificationSchedules({
-      subscription,
-      userId,
-      fromDate: new Date().toISOString().slice(0, 10),
-      timezone: "Australia/Perth",
-    }),
-  );
+  await refreshSubscriptionNotifications(userId, subscription);
   await setCandidateStatus(userId, id, "Accepted");
+  await recordAuditEvent(userId, {
+    entityType: "subscription",
+    entityId: subscription.id,
+    action: "DetectionAccepted",
+    summary: `Added ${subscription.providerName} from bank transaction detection`,
+  });
 
   revalidatePath("/detected");
   revalidatePath("/dashboard");

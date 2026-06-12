@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { CancellationPanel } from "@/components/cancellation-panel";
 import { SharingEditor } from "@/components/sharing-editor";
 import { StatusPill } from "@/components/status-pill";
 import { SubscriptionForm } from "@/components/subscription-form";
-import { formatCadence, formatCurrency, formatDate } from "@/lib/format";
+import { listAuditEventsForEntity } from "@/lib/audit/repository";
+import { formatCadence, formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import {
   getSharesForSubscriptions,
   listHouseholdMembers,
@@ -12,6 +14,8 @@ import { requireUserId } from "@/lib/auth/session";
 import { getSubscriptionById } from "@/lib/subscriptions/repository";
 import {
   deleteSubscriptionAction,
+  markCancellationRequestedAction,
+  markCanceledAction,
   saveSubscriptionSharingAction,
   updateSubscriptionAction,
 } from "../actions";
@@ -45,12 +49,18 @@ export default async function SubscriptionDetailPage({
   const shares =
     (await getSharesForSubscriptions([subscription.id])).get(subscription.id) ??
     [];
+  const history = await listAuditEventsForEntity(userId, subscription.id);
   const updateAction = updateSubscriptionAction.bind(null, subscription.id);
   const deleteAction = deleteSubscriptionAction.bind(null, subscription.id);
   const sharingAction = saveSubscriptionSharingAction.bind(
     null,
     subscription.id,
   );
+  const cancellationRequestAction = markCancellationRequestedAction.bind(
+    null,
+    subscription.id,
+  );
+  const markCanceled = markCanceledAction.bind(null, subscription.id);
 
   return (
     <div className="space-y-6">
@@ -144,17 +154,14 @@ export default async function SubscriptionDetailPage({
             <ActionLink label="Cancel or unsubscribe" href={subscription.cancelUrl} />
             <ActionLink label="Support" href={subscription.supportUrl} />
           </div>
-          <div className="mt-6 rounded-md border border-[#e8d69a] bg-[#fff9df] p-4">
-            <p className="text-sm font-semibold text-[#3e2f00]">
-              Cancellation status
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[#7a640f]">
-              Not requested. The next pass will persist cancellation requests,
-              notes, and audit history.
-            </p>
-          </div>
         </aside>
       </section>
+
+      <CancellationPanel
+        subscription={subscription}
+        requestAction={cancellationRequestAction}
+        confirmAction={markCanceled}
+      />
 
       <SharingEditor
         subscription={subscription}
@@ -162,6 +169,41 @@ export default async function SubscriptionDetailPage({
         shares={shares}
         action={sharingAction}
       />
+
+      <section className="rounded-lg border border-[#dbe3dc] bg-white">
+        <div className="border-b border-[#e5ebe6] px-5 py-4">
+          <h2 className="text-lg font-semibold">History</h2>
+          <p className="text-sm text-[#68766f]">
+            Every change to this subscription, including price moves and
+            cancellation steps.
+          </p>
+        </div>
+        <div className="divide-y divide-[#edf1ed]">
+          {history.length > 0 ? (
+            history.map((event) => (
+              <div
+                key={event.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full border border-[#cbd8d0] bg-[#f3f7f2] px-2.5 py-1 text-xs font-semibold text-[#34443f]">
+                    {event.action}
+                  </span>
+                  <p className="text-sm text-[#16201d]">{event.summary}</p>
+                </div>
+                <p className="text-xs text-[#68766f]">
+                  {formatDateTime(event.createdAt)}
+                </p>
+              </div>
+            ))
+          ) : (
+            <div className="px-5 py-6 text-sm text-[#68766f]">
+              No recorded changes yet. Edits, price changes, sharing, and
+              cancellation steps will appear here.
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="space-y-4">
         <div>

@@ -78,6 +78,18 @@ function buildInsightCards(
     });
   }
 
+  for (const increase of insights.priceIncreases) {
+    cards.push({
+      key: `price-${increase.priceChange.id}`,
+      kind: "Price increase",
+      title: increase.subscription.providerName,
+      detail: `Up ${formatCurrency(increase.increaseAmount, currency)} (${
+        increase.increasePercent
+      }%) to ${formatCurrency(increase.priceChange.newPriceAmount, currency)} on ${increase.priceChange.changeDate}.`,
+      href: `/subscriptions/${increase.subscription.id}`,
+    });
+  }
+
   for (const underused of insights.underused) {
     cards.push({
       key: `underused-${underused.subscription.id}`,

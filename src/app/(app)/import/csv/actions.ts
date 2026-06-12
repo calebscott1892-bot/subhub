@@ -2,11 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import {
-  cancelFutureNotificationsForSubscription,
-  upsertNotificationSchedules,
-} from "@/lib/notifications/repository";
-import { buildNotificationSchedules } from "@/lib/notifications/schedule";
+import { recordAuditEvent } from "@/lib/audit/repository";
+import { refreshSubscriptionNotifications } from "@/lib/notifications/refresh";
 import {
   buildCsvImportPreview,
   commitCsvImport,
@@ -69,6 +66,17 @@ export async function commitCsvImportAction(formData: FormData) {
     createSubscription: (input) => createImportedSubscription(userId, input),
   });
 
+  if (result.createdCount > 0) {
+    await recordAuditEvent(userId, {
+      entityType: "import",
+      entityId: "csv-import",
+      action: "Imported",
+      summary: `Imported ${result.createdCount} subscription${
+        result.createdCount === 1 ? "" : "s"
+      } from CSV`,
+    });
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/subscriptions");
   revalidatePath("/trials");
@@ -94,25 +102,6 @@ async function createImportedSubscription(
   input: SubscriptionFormInput,
 ): Promise<Subscription> {
   const subscription = await createSubscription(userId, input);
-  await refreshNotificationSchedules(userId, subscription);
+  await refreshSubscriptionNotifications(userId, subscription);
   return subscription;
-}
-
-async function refreshNotificationSchedules(
-  userId: string,
-  subscription: Subscription,
-) {
-  await cancelFutureNotificationsForSubscription(
-    userId,
-    subscription.id,
-    new Date(),
-  );
-  await upsertNotificationSchedules(
-    buildNotificationSchedules({
-      subscription,
-      userId,
-      fromDate: new Date().toISOString().slice(0, 10),
-      timezone: "Australia/Perth",
-    }),
-  );
 }

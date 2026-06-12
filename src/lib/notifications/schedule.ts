@@ -17,12 +17,18 @@ export type NotificationSchedule = {
   };
 };
 
+export type ReminderPreferences = {
+  trialReminders: boolean;
+  renewalReminders: boolean;
+};
+
 type BuildNotificationSchedulesInput = {
   subscription: Subscription;
   userId: string;
   fromDate: string;
   timezone: string;
   reminderHour?: number;
+  preferences?: ReminderPreferences;
 };
 
 const TRIAL_LEAD_DAYS = [7, 2, 0];
@@ -38,10 +44,11 @@ export function buildNotificationSchedules({
   fromDate,
   timezone,
   reminderHour = 9,
+  preferences = { trialReminders: true, renewalReminders: true },
 }: BuildNotificationSchedulesInput): NotificationSchedule[] {
   const schedules: NotificationSchedule[] = [];
 
-  if (subscription.status === "Trial") {
+  if (subscription.status === "Trial" && preferences.trialReminders) {
     const trialDeadline = subscription.cancelByDate || subscription.trialEndDate;
 
     if (trialDeadline) {
@@ -64,7 +71,11 @@ export function buildNotificationSchedules({
 
   const renewalDate = subscription.renewalDate;
 
-  if (renewalDate && ACTIVE_RENEWAL_STATUSES.has(subscription.status)) {
+  if (
+    renewalDate &&
+    preferences.renewalReminders &&
+    ACTIVE_RENEWAL_STATUSES.has(subscription.status)
+  ) {
     schedules.push(
       ...RENEWAL_LEAD_DAYS.flatMap((leadDays) =>
         buildScheduleForLeadDay({

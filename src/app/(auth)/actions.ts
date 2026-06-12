@@ -7,6 +7,11 @@ import {
   verifyPassword,
 } from "@/lib/auth/password";
 import {
+  clearLoginAttempts,
+  isLoginRateLimited,
+  recordFailedLogin,
+} from "@/lib/auth/rate-limit";
+import {
   createSession,
   destroySession,
   findUserForLogin,
@@ -21,15 +26,21 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=missing");
   }
 
+  if (await isLoginRateLimited(email, new Date())) {
+    redirect("/login?error=locked");
+  }
+
   const user = await findUserForLogin(email);
   const passwordMatches = user
     ? await verifyPassword(password, user.passwordHash)
     : false;
 
   if (!user || !passwordMatches) {
+    await recordFailedLogin(email);
     redirect("/login?error=invalid");
   }
 
+  await clearLoginAttempts(email);
   await createSession(user.id);
   redirect("/dashboard");
 }

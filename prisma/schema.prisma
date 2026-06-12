@@ -12,8 +12,27 @@ model User {
   email        String   @unique
   passwordHash String
   displayName  String?
+  timezone     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model ReminderSettings {
+  id               String   @id
+  userId           String   @unique
+  trialReminders   Boolean  @default(true)
+  renewalReminders Boolean  @default(true)
+  monthlyReview    Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model LoginAttempt {
+  id        String   @id
+  email     String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
 }
 
 model Session {
@@ -52,6 +71,8 @@ model Subscription {
   lastUsageDate           String?
   isShared                Boolean  @default(false)
   splitType               String?
+  cancellationRequestedAt String?
+  cancellationNotes       String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -113,6 +134,34 @@ model CategoryBudget {
 
   @@unique([userId, category])
   @@index([userId])
+}
+
+model AuditEvent {
+  id         String   @id
+  userId     String
+  entityType String
+  entityId   String
+  action     String
+  summary    String
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, entityId])
+}
+
+model PriceChange {
+  id             String   @id
+  userId         String
+  subscriptionId String
+  oldPriceAmount Float
+  newPriceAmount Float
+  currency       String
+  changeDate     String
+  source         String
+  createdAt      DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([userId, changeDate])
 }
 
 model DetectedCandidate {

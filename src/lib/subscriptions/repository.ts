@@ -29,6 +29,8 @@ type SubscriptionRecord = {
   lastUsageDate: string | null;
   isShared: boolean;
   splitType: string | null;
+  cancellationRequestedAt: string | null;
+  cancellationNotes: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -89,6 +91,8 @@ export async function createSubscription(
       userId,
       isShared: false,
       splitType: null,
+      cancellationRequestedAt: null,
+      cancellationNotes: null,
       createdAt: now,
       updatedAt: now,
       ...input,
@@ -110,6 +114,28 @@ export async function updateSubscription(
       ...input,
       updatedAt: new Date(),
     },
+  });
+
+  if (updateResult.count === 0) {
+    return null;
+  }
+
+  return getSubscriptionById(userId, id, store);
+}
+
+export async function updateCancellationState(
+  userId: string,
+  id: string,
+  data: {
+    status?: Subscription["status"];
+    cancellationRequestedAt?: string | null;
+    cancellationNotes?: string | null;
+  },
+  store: SubscriptionStore = prisma,
+): Promise<Subscription | null> {
+  const updateResult = await store.subscription.updateMany({
+    where: { id, userId },
+    data: { ...data, updatedAt: new Date() },
   });
 
   if (updateResult.count === 0) {
@@ -157,6 +183,8 @@ function mapSubscriptionRecord(record: SubscriptionRecord): Subscription {
     lastUsageDate: record.lastUsageDate,
     isShared: record.isShared,
     splitType: record.splitType as Subscription["splitType"],
+    cancellationRequestedAt: record.cancellationRequestedAt,
+    cancellationNotes: record.cancellationNotes,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };
