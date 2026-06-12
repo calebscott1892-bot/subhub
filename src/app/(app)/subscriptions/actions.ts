@@ -14,10 +14,10 @@ import { buildNotificationSchedules } from "@/lib/notifications/schedule";
 import { computeSplit } from "@/lib/sharing/split-rules";
 import { parseSharingFormData } from "@/lib/sharing/validation";
 import { calculateMonthlyCost } from "@/lib/subscriptions/costs";
+import { requireUserId } from "@/lib/auth/session";
 import {
   createSubscription,
   deleteSubscription,
-  DEMO_USER_ID,
   getSubscriptionById,
   updateSubscription,
 } from "@/lib/subscriptions/repository";
@@ -25,14 +25,15 @@ import type { Subscription } from "@/lib/subscriptions/types";
 import { parseSubscriptionFormData } from "@/lib/subscriptions/validation";
 
 export async function createSubscriptionAction(formData: FormData) {
+  const userId = await requireUserId();
   const parsed = parseSubscriptionFormData(formData);
 
   if (!parsed.ok) {
     throw new Error(formatValidationErrors(parsed.errors));
   }
 
-  const subscription = await createSubscription(DEMO_USER_ID, parsed.data);
-  await refreshNotificationSchedules(subscription);
+  const subscription = await createSubscription(userId, parsed.data);
+  await refreshNotificationSchedules(userId, subscription);
   revalidatePath("/dashboard");
   revalidatePath("/subscriptions");
   revalidatePath("/trials");
@@ -41,13 +42,14 @@ export async function createSubscriptionAction(formData: FormData) {
 }
 
 export async function updateSubscriptionAction(id: string, formData: FormData) {
+  const userId = await requireUserId();
   const parsed = parseSubscriptionFormData(formData);
 
   if (!parsed.ok) {
     throw new Error(formatValidationErrors(parsed.errors));
   }
 
-  const subscription = await updateSubscription(DEMO_USER_ID, id, parsed.data);
+  const subscription = await updateSubscription(userId, id, parsed.data);
 
   revalidatePath("/dashboard");
   revalidatePath("/subscriptions");
@@ -57,13 +59,14 @@ export async function updateSubscriptionAction(id: string, formData: FormData) {
     redirect("/subscriptions");
   }
 
-  await refreshNotificationSchedules(subscription);
+  await refreshNotificationSchedules(userId, subscription);
   redirect(`/subscriptions/${id}`);
 }
 
 export async function deleteSubscriptionAction(id: string) {
-  await deleteSubscription(DEMO_USER_ID, id);
-  await cancelFutureNotificationsForSubscription(DEMO_USER_ID, id, new Date());
+  const userId = await requireUserId();
+  await deleteSubscription(userId, id);
+  await cancelFutureNotificationsForSubscription(userId, id, new Date());
   revalidatePath("/dashboard");
   revalidatePath("/subscriptions");
   revalidatePath("/trials");
@@ -75,7 +78,8 @@ export async function saveSubscriptionSharingAction(
   id: string,
   formData: FormData,
 ) {
-  const members = await listHouseholdMembers(DEMO_USER_ID);
+  const userId = await requireUserId();
+  const members = await listHouseholdMembers(userId);
   const parsed = parseSharingFormData(formData, members);
 
   if (!parsed.ok) {
@@ -83,7 +87,7 @@ export async function saveSubscriptionSharingAction(
   }
 
   if (parsed.data.splitType !== null) {
-    const subscription = await getSubscriptionById(DEMO_USER_ID, id);
+    const subscription = await getSubscriptionById(userId, id);
 
     if (!subscription) {
       redirect("/subscriptions");
@@ -100,7 +104,7 @@ export async function saveSubscriptionSharingAction(
     }
   }
 
-  await setSubscriptionSharing(DEMO_USER_ID, id, parsed.data);
+  await setSubscriptionSharing(userId, id, parsed.data);
   revalidatePath("/dashboard");
   revalidatePath("/budget");
   revalidatePath("/household");
@@ -112,16 +116,19 @@ function formatValidationErrors(errors: Record<string, string>): string {
   return Object.values(errors).join(" ");
 }
 
-async function refreshNotificationSchedules(subscription: Subscription) {
+async function refreshNotificationSchedules(
+  userId: string,
+  subscription: Subscription,
+) {
   await cancelFutureNotificationsForSubscription(
-    DEMO_USER_ID,
+    userId,
     subscription.id,
     new Date(),
   );
   await upsertNotificationSchedules(
     buildNotificationSchedules({
       subscription,
-      userId: DEMO_USER_ID,
+      userId,
       fromDate: new Date().toISOString().slice(0, 10),
       timezone: "Australia/Perth",
     }),

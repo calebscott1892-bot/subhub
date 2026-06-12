@@ -1,10 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import { hashPassword } from "../src/lib/auth/password";
 import { buildNotificationSchedules } from "../src/lib/notifications/schedule";
 import { sampleSubscriptions } from "../src/lib/subscriptions/sample-data";
 
 const prisma = new PrismaClient();
 const demoUserId = "demo-user";
+const demoUserEmail = "demo@subhub.local";
+const demoUserPassword = "subhub-demo";
 const seedDate = "2026-05-19";
 const seedTimezone = "Australia/Perth";
 
@@ -65,6 +68,19 @@ const demoBudget = {
 };
 
 async function main() {
+  const passwordHash = await hashPassword(demoUserPassword);
+
+  await prisma.user.upsert({
+    where: { id: demoUserId },
+    update: { email: demoUserEmail, passwordHash, displayName: "Demo" },
+    create: {
+      id: demoUserId,
+      email: demoUserEmail,
+      passwordHash,
+      displayName: "Demo",
+    },
+  });
+
   await prisma.notification.deleteMany({
     where: { userId: demoUserId },
   });

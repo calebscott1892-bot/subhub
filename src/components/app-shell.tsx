@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { logoutAction } from "@/app/(auth)/actions";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -12,7 +13,13 @@ const navItems = [
   { href: "/settings", label: "Settings" },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  userLabel,
+}: {
+  children: React.ReactNode;
+  userLabel?: string;
+}) {
   return (
     <div className="min-h-screen bg-[#f5f7f4] text-[#16201d]">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-[#dbe3dc] bg-[#fbfcf8] px-5 py-6 lg:block">
@@ -22,7 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </span>
           <span>
             <span className="block text-base font-semibold">Subscription Hub</span>
-            <span className="block text-xs text-[#68766f]">Demo workspace</span>
+            <span className="block max-w-[150px] truncate text-xs text-[#68766f]">
+              {userLabel ?? "Workspace"}
+            </span>
           </span>
         </Link>
 
@@ -38,16 +47,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        <div className="absolute bottom-6 left-5 right-5 rounded-lg border border-[#dbe3dc] bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#68766f]">
-            Current phase
-          </p>
-          <p className="mt-2 text-sm font-medium text-[#16201d]">
-            Budgets and insights
-          </p>
-          <p className="mt-1 text-xs leading-5 text-[#68766f]">
-            Targets, charge forecasts, and spending insights.
-          </p>
+        <div className="absolute bottom-6 left-5 right-5 space-y-3">
+          <div className="rounded-lg border border-[#dbe3dc] bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#68766f]">
+              Current phase
+            </p>
+            <p className="mt-2 text-sm font-medium text-[#16201d]">
+              Accounts and detection
+            </p>
+            <p className="mt-1 text-xs leading-5 text-[#68766f]">
+              Real sign-in, budgets, splits, and recurring-charge detection.
+            </p>
+          </div>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="w-full rounded-md border border-[#cbd8d0] bg-white px-3 py-2 text-sm font-semibold text-[#34443f] transition hover:bg-[#edf2ed]"
+            >
+              Log out
+            </button>
+          </form>
         </div>
       </aside>
 

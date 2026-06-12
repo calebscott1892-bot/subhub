@@ -6,6 +6,7 @@ Subscription Hub product planning lives in:
 
 - [Product spec](docs/product/subscription-hub-product-spec.md)
 - [Feature registry](docs/product/subscription-hub-feature-registry.md)
+- [Architecture decisions](docs/product/decisions.md)
 - [Master implementation plan](docs/superpowers/plans/2026-05-19-subscription-hub-master-plan.md)
 - [CSV import implementation plan](docs/superpowers/plans/2026-05-19-csv-import-onboarding-plan.md)
 - [Bobby competitive research](docs/research/bobby-competitive-research.md)
@@ -40,6 +41,20 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Accounts
+
+The app uses email/password accounts with database-backed sessions (scrypt
+password hashing, httpOnly cookie, 30-day expiry, revocable server-side).
+Every app page and server action requires a session.
+
+The seed creates a demo account preloaded with sample data:
+
+```text
+demo@subhub.local / subhub-demo
+```
+
+New accounts created through `/signup` start with an empty workspace.
 
 ## Budget And Insights
 

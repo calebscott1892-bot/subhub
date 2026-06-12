@@ -12,10 +12,8 @@ import {
   summarizeSharedSpend,
 } from "@/lib/sharing/personal-cost";
 import { calculateMonthlyCost } from "@/lib/subscriptions/costs";
-import {
-  DEMO_USER_ID,
-  listSubscriptions,
-} from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
+import { listSubscriptions } from "@/lib/subscriptions/repository";
 import {
   addHouseholdMemberAction,
   removeHouseholdMemberAction,
@@ -24,9 +22,10 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function HouseholdPage() {
-  const household = await getOrCreateHousehold(DEMO_USER_ID);
-  const members = await listHouseholdMembers(DEMO_USER_ID);
-  const subscriptions = await listSubscriptions(DEMO_USER_ID);
+  const userId = await requireUserId();
+  const household = await getOrCreateHousehold(userId);
+  const members = await listHouseholdMembers(userId);
+  const subscriptions = await listSubscriptions(userId);
   const shares = await getSharesForSubscriptions(
     subscriptions.map((subscription) => subscription.id),
   );

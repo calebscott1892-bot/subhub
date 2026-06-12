@@ -14,20 +14,19 @@ import {
   personalMonthlyCost,
   summarizeSharedSpend,
 } from "@/lib/sharing/personal-cost";
-import {
-  DEMO_USER_ID,
-  listSubscriptions,
-} from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
+import { listSubscriptions } from "@/lib/subscriptions/repository";
 import { SUBSCRIPTION_CATEGORIES } from "@/lib/subscriptions/types";
 import { saveBudgetTargetsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function BudgetPage() {
+  const userId = await requireUserId();
   const today = getTodayDateOnly();
-  const subscriptions = await listSubscriptions(DEMO_USER_ID);
-  const settings = await getBudgetSettings(DEMO_USER_ID);
-  const categoryTargets = await getCategoryTargets(DEMO_USER_ID);
+  const subscriptions = await listSubscriptions(userId);
+  const settings = await getBudgetSettings(userId);
+  const categoryTargets = await getCategoryTargets(userId);
   const shares = await getSharesForSubscriptions(
     subscriptions.map((subscription) => subscription.id),
   );

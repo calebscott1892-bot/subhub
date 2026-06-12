@@ -3,8 +3,6 @@ import { prisma } from "@/lib/db/prisma";
 import type { Subscription } from "./types";
 import type { SubscriptionFormInput } from "./validation";
 
-export const DEMO_USER_ID = "demo-user";
-
 type SubscriptionRecord = {
   id: string;
   userId: string;
@@ -56,7 +54,7 @@ export type SubscriptionStore = {
 };
 
 export async function listSubscriptions(
-  userId = DEMO_USER_ID,
+  userId: string,
   store: SubscriptionStore = prisma,
 ): Promise<Subscription[]> {
   const records = await store.subscription.findMany({

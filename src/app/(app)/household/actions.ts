@@ -10,9 +10,10 @@ import {
   addHouseholdMember,
   removeHouseholdMember,
 } from "@/lib/household/repository";
-import { DEMO_USER_ID } from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
 
 export async function addHouseholdMemberAction(formData: FormData) {
+  const userId = await requireUserId();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim() || null;
   const role = String(formData.get("role") ?? "");
@@ -25,16 +26,14 @@ export async function addHouseholdMemberAction(formData: FormData) {
     throw new Error("Choose a supported household role.");
   }
 
-  await addHouseholdMember(
-    DEMO_USER_ID,
-    { name, email, role: role as HouseholdRole },
-    );
+  await addHouseholdMember(userId, { name, email, role: role as HouseholdRole });
   revalidatePath("/household");
   redirect("/household");
 }
 
 export async function removeHouseholdMemberAction(memberId: string) {
-  await removeHouseholdMember(DEMO_USER_ID, memberId);
+  const userId = await requireUserId();
+  await removeHouseholdMember(userId, memberId);
   revalidatePath("/household");
   revalidatePath("/dashboard");
   revalidatePath("/budget");

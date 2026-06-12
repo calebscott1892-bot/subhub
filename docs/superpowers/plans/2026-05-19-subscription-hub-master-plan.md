@@ -339,15 +339,17 @@ Critical constraints:
 
 ## Open Decisions Before Coding
 
-- Auth provider.
-- Database provider.
-- Email provider.
-- Job runner strategy.
-- Charting library.
-- Form and validation stack.
-- Whether first release uses server actions, route handlers, or a hybrid.
-- Whether marketplace starts with trusted contacts only.
-- Whether Plaid and email scanning are gated behind a paid plan or opt-in beta.
+Resolved 2026-06-12 — see `docs/product/decisions.md` for rationale:
+
+- Auth provider: own scrypt + DB-session auth.
+- Database provider: SQLite locally, Postgres-portable schema.
+- Email provider: transport abstraction, local transport now, Resend later.
+- Job runner strategy: idempotent job functions, UI trigger + secret-guarded route.
+- Charting library: none, hand-rolled SVG/CSS.
+- Form and validation stack: FormData + pure parse functions, server actions.
+- Server actions for mutations, route handlers for machine endpoints.
+- Marketplace starts trusted-contacts only, deferred until Stripe exists.
+- Detection ships CSV-first and source-agnostic; Plaid/email are opt-in later sources.
 
 ## First Recommended Slice
 

@@ -12,9 +12,9 @@ import {
   commitCsvImport,
   type CsvImportPreview,
 } from "@/lib/import/commit-import";
+import { requireUserId } from "@/lib/auth/session";
 import {
   createSubscription,
-  DEMO_USER_ID,
   listSubscriptions,
 } from "@/lib/subscriptions/repository";
 import type { Subscription } from "@/lib/subscriptions/types";
@@ -42,7 +42,8 @@ export async function previewCsvImportAction(
     };
   }
 
-  const existingSubscriptions = await listSubscriptions(DEMO_USER_ID);
+  const userId = await requireUserId();
+  const existingSubscriptions = await listSubscriptions(userId);
   const preview = buildCsvImportPreview({ csvText, existingSubscriptions });
 
   return {
@@ -60,11 +61,12 @@ export async function commitCsvImportAction(formData: FormData) {
     redirect("/import/csv");
   }
 
-  const existingSubscriptions = await listSubscriptions(DEMO_USER_ID);
+  const userId = await requireUserId();
+  const existingSubscriptions = await listSubscriptions(userId);
   const result = await commitCsvImport({
     csvText,
     existingSubscriptions,
-    createSubscription: createImportedSubscription,
+    createSubscription: (input) => createImportedSubscription(userId, input),
   });
 
   revalidatePath("/dashboard");
@@ -88,23 +90,27 @@ async function readCsvText(formData: FormData): Promise<string> {
 }
 
 async function createImportedSubscription(
+  userId: string,
   input: SubscriptionFormInput,
 ): Promise<Subscription> {
-  const subscription = await createSubscription(DEMO_USER_ID, input);
-  await refreshNotificationSchedules(subscription);
+  const subscription = await createSubscription(userId, input);
+  await refreshNotificationSchedules(userId, subscription);
   return subscription;
 }
 
-async function refreshNotificationSchedules(subscription: Subscription) {
+async function refreshNotificationSchedules(
+  userId: string,
+  subscription: Subscription,
+) {
   await cancelFutureNotificationsForSubscription(
-    DEMO_USER_ID,
+    userId,
     subscription.id,
     new Date(),
   );
   await upsertNotificationSchedules(
     buildNotificationSchedules({
       subscription,
-      userId: DEMO_USER_ID,
+      userId,
       fromDate: new Date().toISOString().slice(0, 10),
       timezone: "Australia/Perth",
     }),

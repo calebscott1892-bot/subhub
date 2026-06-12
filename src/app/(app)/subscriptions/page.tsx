@@ -2,7 +2,8 @@ import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { calculateMonthlyCost } from "@/lib/subscriptions/costs";
-import { DEMO_USER_ID, listSubscriptions } from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
+import { listSubscriptions } from "@/lib/subscriptions/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,9 @@ export default async function SubscriptionsPage({
 }: {
   searchParams: Promise<{ imported?: string }>;
 }) {
+  const userId = await requireUserId();
   const params = await searchParams;
-  const subscriptions = await listSubscriptions(DEMO_USER_ID);
+  const subscriptions = await listSubscriptions(userId);
   const importedCount = params.imported ? Number(params.imported) : null;
 
   return (

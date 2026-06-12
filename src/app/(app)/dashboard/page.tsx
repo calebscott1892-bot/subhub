@@ -15,7 +15,8 @@ import { getSubscriptionInsights } from "@/lib/insights/get-insights";
 import { summarizeSharedSpend } from "@/lib/sharing/personal-cost";
 import { roundCurrency } from "@/lib/subscriptions/costs";
 import { daysUntil } from "@/lib/subscriptions/dates";
-import { DEMO_USER_ID, listSubscriptions } from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
+import { listSubscriptions } from "@/lib/subscriptions/repository";
 import {
   getDashboardMetrics,
   getTrialDeadline,
@@ -25,9 +26,10 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const userId = await requireUserId();
   const today = getTodayDateOnly();
-  const subscriptions = await listSubscriptions(DEMO_USER_ID);
-  const budgetSettings = await getBudgetSettings(DEMO_USER_ID);
+  const subscriptions = await listSubscriptions(userId);
+  const budgetSettings = await getBudgetSettings(userId);
   const shares = await getSharesForSubscriptions(
     subscriptions.map((subscription) => subscription.id),
   );

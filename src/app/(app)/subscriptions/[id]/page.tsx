@@ -8,10 +8,8 @@ import {
   listHouseholdMembers,
 } from "@/lib/household/repository";
 import { calculateAnnualCost, calculateMonthlyCost } from "@/lib/subscriptions/costs";
-import {
-  DEMO_USER_ID,
-  getSubscriptionById,
-} from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
+import { getSubscriptionById } from "@/lib/subscriptions/repository";
 import {
   deleteSubscriptionAction,
   saveSubscriptionSharingAction,
@@ -25,8 +23,9 @@ export default async function SubscriptionDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const userId = await requireUserId();
   const { id } = await params;
-  const subscription = await getSubscriptionById(DEMO_USER_ID, id);
+  const subscription = await getSubscriptionById(userId, id);
 
   if (!subscription) {
     return (
@@ -42,7 +41,7 @@ export default async function SubscriptionDetailPage({
     );
   }
 
-  const members = await listHouseholdMembers(DEMO_USER_ID);
+  const members = await listHouseholdMembers(userId);
   const shares =
     (await getSharesForSubscriptions([subscription.id])).get(subscription.id) ??
     [];

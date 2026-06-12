@@ -2,14 +2,16 @@ import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { daysUntil } from "@/lib/subscriptions/dates";
-import { DEMO_USER_ID, listSubscriptions } from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
+import { listSubscriptions } from "@/lib/subscriptions/repository";
 import { getTrialDeadline } from "@/lib/subscriptions/selectors";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrialsPage() {
+  const userId = await requireUserId();
   const today = new Date().toISOString().slice(0, 10);
-  const trials = (await listSubscriptions(DEMO_USER_ID))
+  const trials = (await listSubscriptions(userId))
     .filter((subscription) => subscription.status === "Trial")
     .sort((left, right) =>
       String(getTrialDeadline(left)).localeCompare(String(getTrialDeadline(right))),

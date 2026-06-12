@@ -3,12 +3,13 @@ import { formatDateTime } from "@/lib/format";
 import {
   listNotifications,
 } from "@/lib/notifications/repository";
-import { DEMO_USER_ID } from "@/lib/subscriptions/repository";
+import { requireUserId } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
-  const notifications = await listNotifications(DEMO_USER_ID);
+  const userId = await requireUserId();
+  const notifications = await listNotifications(userId);
 
   return (
     <div className="space-y-6">

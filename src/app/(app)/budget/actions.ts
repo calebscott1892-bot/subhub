@@ -2,18 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireUserId } from "@/lib/auth/session";
 import { saveBudgetTargets } from "@/lib/budget/repository";
 import { parseBudgetFormData } from "@/lib/budget/validation";
-import { DEMO_USER_ID } from "@/lib/subscriptions/repository";
 
 export async function saveBudgetTargetsAction(formData: FormData) {
+  const userId = await requireUserId();
   const parsed = parseBudgetFormData(formData);
 
   if (!parsed.ok) {
     throw new Error(Object.values(parsed.errors).join(" "));
   }
 
-  await saveBudgetTargets(DEMO_USER_ID, parsed.data);
+  await saveBudgetTargets(userId, parsed.data);
   revalidatePath("/budget");
   revalidatePath("/dashboard");
   redirect("/budget");
