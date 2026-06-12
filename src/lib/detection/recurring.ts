@@ -207,7 +207,7 @@ export function normalizeMerchant(description: string): string {
     .trim();
 }
 
-function findMatchingSubscription(
+export function findMatchingSubscription(
   normalizedMerchant: string,
   subscriptions: Subscription[],
 ): string | null {
@@ -237,7 +237,7 @@ function sharesLeadingWord(left: string, right: string): boolean {
   return leftWord.length >= 4 && leftWord === rightWord;
 }
 
-function guessCategory(normalizedMerchant: string): SubscriptionCategory {
+export function guessCategory(normalizedMerchant: string): SubscriptionCategory {
   for (const [category, keywords] of CATEGORY_KEYWORDS) {
     if (keywords.some((keyword) => normalizedMerchant.includes(keyword))) {
       return category;

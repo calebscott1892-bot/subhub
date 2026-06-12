@@ -10,6 +10,7 @@ import {
   acceptCandidateAction,
   dismissCandidateAction,
   mergeCandidateAction,
+  scanEmailReceiptAction,
   scanSampleTransactionsAction,
   scanTransactionsAction,
 } from "./actions";
@@ -20,6 +21,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   empty: "Paste CSV text or choose a file before scanning.",
   unparseable:
     "No usable transactions found. The CSV needs date, description, and amount columns.",
+  "email-empty": "Paste the text of a receipt or renewal email first.",
+  "email-unparseable":
+    "Could not find a provider and an amount in that email. Include the From line and the charged amount.",
 };
 
 export default async function DetectedPage({
@@ -30,6 +34,7 @@ export default async function DetectedPage({
     scanned?: string;
     found?: string;
     rowErrors?: string;
+    email?: string;
   }>;
 }) {
   const userId = await requireUserId();
@@ -49,8 +54,9 @@ export default async function DetectedPage({
   const errorMessage = params.error
     ? (ERROR_MESSAGES[params.error] ?? null)
     : null;
-  const scanSummary =
-    params.scanned && params.found
+  const scanSummary = params.email
+    ? "Receipt parsed - the candidate is in the review queue below."
+    : params.scanned && params.found
       ? `Scanned ${params.scanned} transactions and found ${params.found} recurring pattern${
           params.found === "1" ? "" : "s"
         }${
@@ -126,6 +132,33 @@ export default async function DetectedPage({
             className="rounded-md border border-[#cbd8d0] bg-white px-4 py-2 text-sm font-semibold text-[#22312d] transition hover:bg-[#edf2ed]"
           >
             Try it with sample bank data
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-lg border border-[#dbe3dc] bg-white">
+        <div className="border-b border-[#e5ebe6] px-5 py-4">
+          <h2 className="text-lg font-semibold">Paste an email receipt</h2>
+          <p className="text-sm text-[#68766f]">
+            Copy a receipt, invoice, or renewal email here. The provider,
+            amount, date, and cadence are extracted locally - nothing connects
+            to your inbox.
+          </p>
+        </div>
+        <form action={scanEmailReceiptAction} className="px-5 py-5">
+          <textarea
+            name="emailText"
+            rows={6}
+            placeholder={
+              "From: Disney+ <billing@disneyplus.com>\nSubject: Your receipt\nTotal: $13.99 per month\nBilled on June 9, 2026"
+            }
+            className="w-full rounded-md border border-[#cbd8d0] bg-white px-3 py-2 font-mono text-xs text-[#16201d] focus:border-[#176143] focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="mt-3 rounded-md bg-[#16362f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#214d43]"
+          >
+            Extract subscription
           </button>
         </form>
       </section>

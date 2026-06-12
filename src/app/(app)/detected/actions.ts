@@ -4,8 +4,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { recordAuditEvent } from "@/lib/audit/repository";
 import { requireUserId } from "@/lib/auth/session";
+import { parseEmailReceipt } from "@/lib/detection/parse-email";
 import { parseTransactionsCsv } from "@/lib/detection/parse-transactions";
-import { detectRecurringCharges } from "@/lib/detection/recurring";
+import {
+  detectRecurringCharges,
+  findMatchingSubscription,
+  guessCategory,
+  normalizeMerchant,
+  type RecurringCandidate,
+} from "@/lib/detection/recurring";
 import {
   getDetectedCandidate,
   saveScanResults,
@@ -14,6 +21,7 @@ import {
 } from "@/lib/detection/repository";
 import { buildSampleTransactionsCsv } from "@/lib/detection/sample-transactions";
 import { refreshSubscriptionNotifications } from "@/lib/notifications/refresh";
+import { calculateNextRenewalDate } from "@/lib/subscriptions/dates";
 import {
   createSubscription,
   listSubscriptions,
@@ -55,6 +63,56 @@ async function runScan(userId: string, csvText: string): Promise<never> {
   redirect(
     `/detected?scanned=${parsed.transactions.length}&found=${candidates.length}&rowErrors=${parsed.errors.length}`,
   );
+}
+
+export async function scanEmailReceiptAction(formData: FormData) {
+  const userId = await requireUserId();
+  const emailText = String(formData.get("emailText") ?? "");
+
+  if (!emailText.trim()) {
+    redirect("/detected?error=email-empty");
+  }
+
+  const parsed = parseEmailReceipt(emailText);
+  const normalizedMerchant = parsed
+    ? normalizeMerchant(parsed.providerGuess)
+    : "";
+
+  if (!parsed || !normalizedMerchant) {
+    redirect("/detected?error=email-unparseable");
+  }
+
+  const existingSubscriptions = await listSubscriptions(userId);
+  const today = new Date().toISOString().slice(0, 10);
+  const chargeDate = parsed.chargeDate ?? today;
+  const cadence = parsed.cadenceGuess ?? "Monthly";
+  const candidate: RecurringCandidate = {
+    merchantLabel: parsed.providerGuess,
+    normalizedMerchant,
+    billingCadence: cadence,
+    intervalDays: null,
+    lastAmount: parsed.amount,
+    averageAmount: parsed.amount,
+    occurrenceCount: 1,
+    firstChargeDate: chargeDate,
+    lastChargeDate: chargeDate,
+    nextEstimatedCharge: calculateNextRenewalDate(chargeDate, cadence, null),
+    confidence: parsed.confidence,
+    categoryGuess: guessCategory(normalizedMerchant),
+    evidence: parsed.matchedLines.map((line) => ({
+      date: chargeDate,
+      description: line.slice(0, 140),
+      amount: parsed.amount,
+    })),
+    matchedSubscriptionId: findMatchingSubscription(
+      normalizedMerchant,
+      existingSubscriptions,
+    ),
+  };
+
+  await saveScanResults(userId, [candidate]);
+  revalidatePath("/detected");
+  redirect("/detected?email=1");
 }
 
 export async function acceptCandidateAction(id: string) {

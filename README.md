@@ -106,21 +106,26 @@ detector groups charges by normalized merchant, infers the cadence
 (weekly/monthly/yearly/custom interval), tolerates price changes, and scores
 each candidate with confidence plus the transaction evidence.
 
+You can also paste the text of a receipt, invoice, or renewal email and the
+provider, amount, date, and cadence are extracted locally — no inbox
+connection needed.
+
 Everything passes through a review queue: accept creates a subscription with
 reminders scheduled, candidates matching an existing subscription offer a
 merge instead (never a duplicate), and dismissed candidates stay out of the
 queue on future scans. A built-in sample bank export demonstrates the flow in
-one click. Plaid and email scanning later become additional sources feeding
-this same queue.
+one click. Plaid and OAuth email scanning later become additional sources
+feeding this same queue.
 
 ## Reminders, Email, And Calendar
 
 Reminders are scheduled rows that a send job delivers. "Send due reminders
 now" on `/notifications` (or `POST /api/jobs/send-notifications`, guarded by
 `JOB_SECRET` for external schedulers) processes everything due: email
-reminders go through the transport in `src/lib/email/provider.ts` (a local
-log transport until a Resend key is configured) and in-app reminders are
-marked delivered. The job is idempotent.
+reminders go through the transport in `src/lib/email/provider.ts` and in-app
+reminders are marked delivered. The job is idempotent. Setting
+`RESEND_API_KEY` (and a verified `EMAIL_FROM`) switches email delivery from
+the local log transport to real sending through Resend — no code change.
 
 `/api/calendar` exports an auth-guarded `.ics` file of the next year of
 projected charges plus trial cancel-by deadlines — the "Export calendar"
